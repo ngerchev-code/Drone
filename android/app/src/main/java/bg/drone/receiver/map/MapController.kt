@@ -69,9 +69,14 @@ class MapController(private val context: Context) {
             }
             m.cameraPosition = CameraPosition.Builder().target(LatLng(42.7, 25.3)).zoom(6.3).build()
             loadStyle(m, Style.Builder().fromUri(STYLE_URL))
-            // без интернет или при недостъпен OpenFreeMap → резервна растерна карта (OSM)
+            // при неуспех: още 2 опита с векторния стил (мрежата често е бавна при старт),
+            // после резервна растерна карта (OSM)
             mapView.addOnDidFailLoadingMapListener {
-                if (!usingFallback) {
+                if (style != null || usingFallback) return@addOnDidFailLoadingMapListener
+                if (styleAttempts < 3) {
+                    styleAttempts++
+                    mapView.postDelayed({ if (style == null && !usingFallback) loadStyle(m, Style.Builder().fromUri(STYLE_URL)) }, 2500L * styleAttempts)
+                } else {
                     usingFallback = true
                     loadStyle(m, Style.Builder().fromJson(FALLBACK_STYLE_JSON))
                 }
@@ -91,6 +96,7 @@ class MapController(private val context: Context) {
     }
 
     private var usingFallback = false
+    private var styleAttempts = 1
 
     private fun loadStyle(m: MapLibreMap, builder: Style.Builder) {
         style = null
@@ -243,7 +249,7 @@ class MapController(private val context: Context) {
                "attribution":"© OpenStreetMap contributors",
                "tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"]}},
              "layers":[{"id":"bg","type":"background","paint":{"background-color":"#0B0F14"}},
-                       {"id":"osm","type":"raster","source":"osm","paint":{"raster-saturation":-0.8,"raster-brightness-max":0.45,"raster-contrast":0.2}}]}
+                       {"id":"osm","type":"raster","source":"osm","paint":{"raster-saturation":-1,"raster-brightness-max":0.3,"raster-contrast":0.15}}]}
         """.trimIndent()
     }
 }
