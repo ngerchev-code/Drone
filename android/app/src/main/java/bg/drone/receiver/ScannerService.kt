@@ -33,6 +33,7 @@ import bg.drone.rid.DemoFleet
 import bg.drone.rid.IngestBatcher
 import bg.drone.rid.RID_SERVICE_UUID
 import bg.drone.rid.RidTransport
+import bg.drone.rid.toTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -263,6 +264,10 @@ class ScannerService : Service() {
         scope.launch {
             while (isActive) {
                 ReceiverState.refresh()
+                // охраната работи и при изключен екран: тук се проверяват само Remote ID дроновете
+                runCatching {
+                    Guard.check(this@ScannerService, ReceiverState.drones.value.mapNotNull { it.toTarget() }, setOf(bg.drone.rid.TargetSource.REMOTE_ID))
+                }
                 delay(1000)
             }
         }

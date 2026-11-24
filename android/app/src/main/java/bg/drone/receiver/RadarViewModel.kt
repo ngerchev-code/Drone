@@ -251,6 +251,7 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
             store.replace(TargetSource.REMOTE_ID, ReceiverState.drones.value.mapNotNull { it.toTarget() })
             publish()
             checkAlerts()
+            runCatching { Guard.check(getApplication<Application>(), _targets.value) }
             if (++tick % 5 == 0) {
                 val snapshot = _targets.value
                 val me = ReceiverState.location.value

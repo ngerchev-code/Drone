@@ -1,0 +1,14 @@
+# Медиен сървър за видео от дрона: приема RTMP (DJI Fly и др.) и го дава като HLS/RTSP/WebRTC.
+#   docker compose up -d
+# Портове: 1935 RTMP (вход), 8888 HLS, 8554 RTSP, 8889 WebRTC
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest   # за продукция закови конкретна версия
+    restart: unless-stopped
+    ports:
+      - "1935:1935"
+      - "8888:8888"
+      - "8554:8554"
+      - "8889:8889"
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro

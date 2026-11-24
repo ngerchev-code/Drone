@@ -198,7 +198,11 @@ private fun categoryColor(c: String) = when (c) {
 // ---------------------------------------------------------------- Настройки
 
 @Composable
-fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
+fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int, controller: bg.drone.receiver.map.MapController? = null) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val offline by bg.drone.receiver.map.OfflineMaps.regions.collectAsStateWithLifecycle()
+    val offlineProgress by bg.drone.receiver.map.OfflineMaps.progress.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { bg.drone.receiver.map.OfflineMaps.refresh(ctx) }
     val s = vm.settings
     val scan by ReceiverState.status.collectAsStateWithLifecycle()
     var adsb by remember { mutableStateOf(s.adsbEnabled) }
@@ -301,6 +305,28 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
                 Text("До 80 km / 50 мили. Remote ID се хваща на 1–2 km, затова голям радиус има смисъл главно за ADS-B БЛА.", color = Palette.Muted, fontSize = 11.sp)
             }
         }
+        Group("Офлайн карти") {
+            Text("Изтегли видимата част от картата (до мащаб 14) за полети без мобилен интернет. Приближи картата до района, който ти трябва.", color = Palette.Muted, fontSize = 12.sp)
+            androidx.compose.material3.Button(
+                onClick = {
+                    val b = controller?.visibleBounds()
+                    val z = controller?.zoom() ?: 10.0
+                    if (b != null) bg.drone.receiver.map.OfflineMaps.download(ctx, b, z, "Област %.3f, %.3f".format(java.util.Locale.ROOT, (b.latNorth + b.latSouth) / 2, (b.lonEast + b.lonWest) / 2))
+                },
+                enabled = controller != null && offlineProgress == null,
+                modifier = Modifier.padding(top = 6.dp),
+            ) { Text("Изтегли видимата област") }
+            offlineProgress?.let { Text(it, color = Palette.Accent, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp)) }
+            offline.forEach { r ->
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text(r.name, color = Palette.Text, fontSize = 14.sp)
+                        Text("${"%.1f".format(r.sizeBytes / 1_048_576.0)} MB · ${r.tiles} плочки${if (r.complete) "" else " · непълна"}", color = Palette.Muted, fontSize = 11.sp)
+                    }
+                    TextButton(onClick = { bg.drone.receiver.map.OfflineMaps.delete(ctx, r.id) }) { Text("Изтрий", color = Palette.Bad) }
+                }
+            }
+        }
         Group("Какво може и какво не") {
             Text(
                 "• Remote ID: всички дронове над 250 g в ЕС/САЩ, произведени след 2024 г. (DJI Mini 4 Pro, Air 3, Mavic 3…), на 300 m до 1–2 km от телефона.\n" +
@@ -315,7 +341,7 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
             KeyValue("SondeHub", "CC BY-SA")
             KeyValue("Карта", "OpenFreeMap · © OpenMapTiles · © OpenStreetMap")
             KeyValue("Новини", bg.drone.rid.News.SOURCES.joinToString(", ") { it.name })
-            KeyValue("Версия", "0.7.0")
+            KeyValue("Версия", "0.8.0")
         }
     }
 }

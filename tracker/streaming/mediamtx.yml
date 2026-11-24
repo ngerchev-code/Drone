@@ -1,0 +1,16 @@
+# Минимална конфигурация на MediaMTX за DroneRadar.
+# Публикуване: rtmp://<сървър>:1935/drone        (DJI Fly → Предаване на живо → RTMP)
+# Гледане:     http://<сървър>:8888/drone/index.m3u8 (HLS, в приложението и в браузър)
+#              rtsp://<сървър>:8554/drone
+rtmp: yes
+hls: yes
+rtsp: yes
+webrtc: yes
+hlsVariant: lowLatency
+
+paths:
+  # всеки път (drone, drone2, ферма…) е отделен поток
+  all_others:
+    # За публичен сървър задай парола за публикуване, иначе всеки може да стриймва:
+    # publishUser: pilot
+    # publishPass: смени-ме

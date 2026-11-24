@@ -118,6 +118,19 @@ private fun RadarApp(vm: RadarViewModel, pendingSelect: androidx.compose.runtime
     androidx.activity.compose.BackHandler(enabled = tab != Tab.MAP) { tab = Tab.MAP }
     val track by vm.track.collectAsStateWithLifecycle()
     LaunchedEffect(track) { controller.showTrack(track?.points) }
+    // охранявани зони на картата + нова зона с дълго натискане
+    val zones by Guard.zones.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { Guard.zones(context) }
+    LaunchedEffect(zones) { controller.showZones(zones) }
+    var newZone by remember { mutableStateOf<bg.drone.rid.GuardZone?>(null) }
+    controller.onLongPress = { lat, lon ->
+        newZone = bg.drone.rid.GuardZone(java.util.UUID.randomUUID().toString(), "Зона ${zones.size + 1}", lat, lon, 500.0)
+    }
+    newZone?.let { z ->
+        bg.drone.receiver.ui.ZoneDialog(z, onDismiss = { newZone = null }, onDelete = { newZone = null }) { saved ->
+            Guard.save(context, zones + saved); newZone = null
+        }
+    }
 
     LaunchedEffect(pendingSelect.value) {
         pendingSelect.value?.let { open(it); pendingSelect.value = null }
@@ -135,7 +148,7 @@ private fun RadarApp(vm: RadarViewModel, pendingSelect: androidx.compose.runtime
             Tab.PILOT -> PilotScreen(vm, navHeight) { tab = Tab.MAP }
             Tab.NEWS -> NewsScreen(vm, navHeight)
             Tab.WIKI -> KnowledgeScreen(vm, navHeight)
-            Tab.SETTINGS -> SettingsScreen(vm, navHeight)
+            Tab.SETTINGS -> SettingsScreen(vm, navHeight, controller)
         }
         NavigationBar(containerColor = Palette.Surface, modifier = Modifier.align(Alignment.BottomCenter)) {
             Tab.entries.filter { it != Tab.SETTINGS }.forEach { t ->

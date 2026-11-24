@@ -61,6 +61,15 @@ class Settings(context: Context) {
         get() = prefs.getString("fpvBuild", "") ?: ""
         set(v) = prefs.edit().putString("fpvBuild", v).apply()
 
+    var guardZones: String
+        get() = prefs.getString("guardZones", "") ?: ""
+        set(v) = prefs.edit().putString("guardZones", v).apply()
+
+    /** Запазени адреси за видео стрийм (по един на ред). */
+    var streamUrls: String
+        get() = prefs.getString("streamUrls", "") ?: ""
+        set(v) = prefs.edit().putString("streamUrls", v).apply()
+
     var baseMap: String
         get() = prefs.getString("baseMap", "DARK") ?: "DARK"
         set(v) = prefs.edit().putString("baseMap", v).apply()

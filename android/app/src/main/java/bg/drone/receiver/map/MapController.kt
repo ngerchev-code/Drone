@@ -50,6 +50,7 @@ class MapController(private val context: Context) {
     private var cameraMoved = false
 
     var onSelect: (String?) -> Unit = {}
+    var onLongPress: (Double, Double) -> Unit = { _, _ -> }
     var onCameraIdle: (Double, Double) -> Unit = { _, _ -> }
 
     data class RenderState(
@@ -88,6 +89,7 @@ class MapController(private val context: Context) {
                 onSelect(hit?.getStringProperty("id"))
                 true
             }
+            m.addOnMapLongClickListener { ll -> onLongPress(ll.latitude, ll.longitude); true }
             m.addOnCameraIdleListener {
                 val t = m.cameraPosition.target ?: return@addOnCameraIdleListener
                 onCameraIdle(t.latitude, t.longitude)
@@ -140,6 +142,7 @@ class MapController(private val context: Context) {
             setupLayers(s)
             pending?.let { render(it) }
             applyTrack()
+            applyZones()
         }
     }
 
@@ -156,6 +159,19 @@ class MapController(private val context: Context) {
         s.addSource(GeoJsonSource(SRC_OPERATOR))
         s.addSource(GeoJsonSource(SRC_ME))
         s.addSource(GeoJsonSource(SRC_TRACK))
+        s.addSource(GeoJsonSource(SRC_ZONES))
+        s.addLayer(
+            org.maplibre.android.style.layers.FillLayer("zones-fill", SRC_ZONES).withProperties(
+                org.maplibre.android.style.layers.PropertyFactory.fillColor(Expression.switchCase(eq(get("active"), literal(true)), Expression.color(0xFFEF4444.toInt()), Expression.color(0xFF8B98A5.toInt()))),
+                org.maplibre.android.style.layers.PropertyFactory.fillOpacity(0.12f),
+            ),
+        )
+        s.addLayer(
+            LineLayer("zones-line", SRC_ZONES).withProperties(
+                lineColor(Expression.switchCase(eq(get("active"), literal(true)), Expression.color(0xFFEF4444.toInt()), Expression.color(0xFF8B98A5.toInt()))),
+                lineWidth(2f), lineDasharray(arrayOf(3f, 2f)),
+            ),
+        )
 
         s.addLayer(
             LineLayer(LAYER_TRAILS, SRC_TRAILS).withProperties(
@@ -268,6 +284,29 @@ class MapController(private val context: Context) {
         }
     }
 
+    private var zones: List<bg.drone.rid.GuardZone> = emptyList()
+
+    fun showZones(z: List<bg.drone.rid.GuardZone>) {
+        zones = z
+        applyZones()
+    }
+
+    private fun applyZones() {
+        val s = style ?: return
+        val features = zones.map { z ->
+            val ring = bg.drone.rid.circlePolygon(z.lat, z.lon, z.radiusM).map { (la, lo) -> Point.fromLngLat(lo, la) }
+            Feature.fromGeometry(org.maplibre.geojson.Polygon.fromLngLats(listOf(ring))).apply {
+                addStringProperty("name", z.name)
+                addBooleanProperty("active", z.active)
+            }
+        }
+        s.getSourceAs<GeoJsonSource>(SRC_ZONES)?.setGeoJson(FeatureCollection.fromFeatures(features))
+    }
+
+    /** Видимата област на картата (за офлайн изтегляне). */
+    fun visibleBounds(): org.maplibre.android.geometry.LatLngBounds? = map?.projection?.visibleRegion?.latLngBounds
+    fun zoom(): Double? = map?.cameraPosition?.zoom
+
     private var track: List<bg.drone.rid.TrackPoint>? = null
 
     /** Показва (или маха при null) импортиран полет и мести камерата към него. */
@@ -311,6 +350,8 @@ class MapController(private val context: Context) {
         private const val SRC_OPERATOR = "operator"
         private const val SRC_ME = "me"
         private const val SRC_TRACK = "track"
+        private const val SRC_ZONES = "zones"
+        const val DARK_STYLE_URL = STYLE_URL
         const val LAYER_TARGETS = "targets-layer"
         private const val LAYER_TRAILS = "trails-layer"
 
