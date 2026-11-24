@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DroneRadar</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="dot"></span> DroneRadar <small>живи дронове чрез Remote ID</small></div>
+    <div class="stats" id="stats">—</div>
+  </header>
+  <main>
+    <aside>
+      <section class="panel">
+        <h2>Мога ли да летя тук?</h2>
+        <p class="hint">Кликни на картата. Височина (m, по избор):</p>
+        <input id="alt" type="number" min="0" max="500" placeholder="напр. 100">
+        <div id="verdict" class="verdict muted">Избери точка на картата.</div>
+      </section>
+      <section class="panel">
+        <h2>Дронове в ефир <span id="count" class="badge">0</span></h2>
+        <input id="filter" type="search" placeholder="Търси по ID, тип…">
+        <ul id="list"></ul>
+      </section>
+      <section class="panel" id="details" hidden></section>
+      <p class="disclaimer">Геозоните са <b>примерни</b> и не са официални. Позицията на пилота е огрубена до ~1 km (GDPR).</p>
+    </aside>
+    <div id="map"></div>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

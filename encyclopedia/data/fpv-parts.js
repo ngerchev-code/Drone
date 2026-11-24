@@ -1,0 +1,83 @@
+// Каталог с FPV части за сглобяване. Цените (EUR) и теглата са ориентировъчни.
+// Ключови полета за съвместимост:
+//   frame.motorMounts  — кои отвори за мотори приема рамката ('16x16 M3', '12x12 M2', '9x9 M2'…)
+//   frame.stackMounts  — размери за монтаж на FC/ESC стека (30.5, 25.5, 20)
+//   frame.maxProp      — максимален размер на перката (инча)
+//   motor.cells        — препоръчителни клетки (S) за този KV
+//   motor.thrust_g     — максимална тяга на мотор с препоръчителната перка и батерия
+
+export const SLOTS = [
+  { key: 'frame', label: 'Рамка' },
+  { key: 'motor', label: 'Мотори (×4)' },
+  { key: 'prop', label: 'Перки' },
+  { key: 'stack', label: 'FC + ESC стек' },
+  { key: 'vtx', label: 'Видео (VTX + камера)' },
+  { key: 'goggles', label: 'Очила' },
+  { key: 'rx', label: 'Приемник' },
+  { key: 'battery', label: 'Батерия' },
+];
+
+export const parts = {
+  frame: [
+    { id: 'f-apex5', name: 'ImpulseRC Apex 5"', size: 5, maxProp: 5.1, motorMounts: ['16x16 M3', '19x19 M3'], stackMounts: [30.5, 20], weight_g: 115, price: 75 },
+    { id: 'f-source-one', name: 'TBS Source One V5 5"', size: 5, maxProp: 5.1, motorMounts: ['16x16 M3'], stackMounts: [30.5, 20], weight_g: 120, price: 30 },
+    { id: 'f-mark4-7', name: 'Mark4 7" Long Range', size: 7, maxProp: 7.5, motorMounts: ['16x16 M3', '19x19 M3'], stackMounts: [30.5], weight_g: 190, price: 45 },
+    { id: 'f-pavo35', name: 'BetaFPV Pavo35 (cinewhoop 3.5")', size: 3.5, maxProp: 3.5, motorMounts: ['12x12 M2', '16x16 M3'], stackMounts: [25.5, 20], weight_g: 95, price: 55 },
+    { id: 'f-3inch', name: 'GEPRC Cinelog30 рамка 3"', size: 3, maxProp: 3, motorMounts: ['12x12 M2', '9x9 M2'], stackMounts: [20], weight_g: 70, price: 40 },
+  ],
+  motor: [
+    { id: 'm-2207-1950', name: 'T-Motor F60 Pro V 2207 1950KV', stator: '2207', kv: 1950, cells: [6], mount: '16x16 M3', maxCurrent_a: 45, weight_g: 34, thrust_g: 1650, propFor: [5], price: 26 },
+    { id: 'm-2207-2550', name: 'T-Motor F60 Pro V 2207 2550KV', stator: '2207', kv: 2550, cells: [4], mount: '16x16 M3', maxCurrent_a: 50, weight_g: 34, thrust_g: 1550, propFor: [5], price: 26 },
+    { id: 'm-2306-1750', name: 'BrotherHobby Avenger 2306.5 1750KV', stator: '2306.5', kv: 1750, cells: [6], mount: '16x16 M3', maxCurrent_a: 42, weight_g: 33, thrust_g: 1600, propFor: [5], price: 22 },
+    { id: 'm-2807-1300', name: 'iFlight XING 2807 1300KV', stator: '2807', kv: 1300, cells: [6], mount: '16x16 M3', maxCurrent_a: 38, weight_g: 52, thrust_g: 2100, propFor: [7], price: 28 },
+    { id: 'm-1804-2450', name: 'BrotherHobby 1804 2450KV', stator: '1804', kv: 2450, cells: [6], mount: '12x12 M2', maxCurrent_a: 22, weight_g: 20, thrust_g: 750, propFor: [3, 3.5], price: 18 },
+    { id: 'm-1404-3800', name: 'T-Motor F1404 3800KV', stator: '1404', kv: 3800, cells: [4], mount: '9x9 M2', maxCurrent_a: 18, weight_g: 9, thrust_g: 400, propFor: [3], price: 17 },
+  ],
+  prop: [
+    { id: 'p-5-hq', name: 'HQProp 5.1x4.6x3 (Ethix S5)', size: 5.1, weight_g: 4.3, price: 4 },
+    { id: 'p-5-gem', name: 'Gemfan 51466 Hurricane', size: 5.1, weight_g: 4.4, price: 3 },
+    { id: 'p-7', name: 'Gemfan 7040 3-blade', size: 7, weight_g: 9.6, price: 5 },
+    { id: 'p-35', name: 'HQProp DT90 3.5"', size: 3.5, weight_g: 2.6, price: 4 },
+    { id: 'p-3', name: 'Gemfan D76 3"', size: 3, weight_g: 1.8, price: 3 },
+  ],
+  stack: [
+    { id: 's-f7-55', name: 'SpeedyBee F405 V4 55A стек', mount: 30.5, escCurrent_a: 55, cells: [3, 6], firmware: 'Betaflight', weight_g: 30, price: 70 },
+    { id: 's-f7-60', name: 'T-Motor F7 + F55A Pro II', mount: 30.5, escCurrent_a: 55, cells: [3, 6], firmware: 'Betaflight', weight_g: 33, price: 110 },
+    { id: 's-20-45', name: 'SpeedyBee F405 Mini 35A стек (20x20)', mount: 20, escCurrent_a: 35, cells: [3, 6], firmware: 'Betaflight', weight_g: 18, price: 60 },
+    { id: 's-25-aio', name: 'BetaFPV F405 25.5 AIO 20A', mount: 25.5, escCurrent_a: 20, cells: [2, 4], firmware: 'Betaflight', weight_g: 8, price: 45 },
+  ],
+  vtx: [
+    { id: 'v-o4', name: 'DJI O4 Air Unit Pro', system: 'DJI O4', weight_g: 33, price: 230, power_w: 5 },
+    { id: 'v-o3', name: 'DJI O3 Air Unit', system: 'DJI O3', weight_g: 36, price: 200, power_w: 6 },
+    { id: 'v-walksnail', name: 'Walksnail Avatar HD Pro Kit', system: 'Walksnail', weight_g: 30, price: 120, power_w: 5 },
+    { id: 'v-hdzero', name: 'HDZero Freestyle V2 + камера', system: 'HDZero', weight_g: 22, price: 110, power_w: 6 },
+    { id: 'v-analog', name: 'Rush Tank Ultimate + Caddx Ratel 2', system: 'Analog', weight_g: 18, price: 55, power_w: 3 },
+  ],
+  goggles: [
+    { id: 'g-dji3', name: 'DJI Goggles 3', systems: ['DJI O4', 'DJI O3'], price: 450 },
+    { id: 'g-dji2', name: 'DJI Goggles 2 / Integra', systems: ['DJI O3'], price: 350 },
+    { id: 'g-walksnail', name: 'Walksnail Avatar HD Goggles X', systems: ['Walksnail', 'Analog'], price: 400 },
+    { id: 'g-hdzero', name: 'HDZero Goggle', systems: ['HDZero', 'Analog'], price: 500 },
+    { id: 'g-skyzone', name: 'Skyzone SKY04X Pro', systems: ['Analog'], price: 480 },
+  ],
+  rx: [
+    { id: 'r-elrs', name: 'RadioMaster RP2 ExpressLRS 2.4 GHz', protocol: 'ExpressLRS', weight_g: 1, price: 15 },
+    { id: 'r-elrs900', name: 'BetaFPV ELRS Nano 915 MHz (long range)', protocol: 'ExpressLRS', weight_g: 1.5, price: 18 },
+    { id: 'r-crsf', name: 'TBS Crossfire Nano RX', protocol: 'Crossfire', weight_g: 1.5, price: 30 },
+  ],
+  battery: [
+    { id: 'b-6s-1300', name: 'CNHL 6S 1300 mAh 100C', cells: 6, capacity_mah: 1300, c: 100, weight_g: 215, price: 32 },
+    { id: 'b-6s-1100', name: 'Tattu R-Line 6S 1100 mAh', cells: 6, capacity_mah: 1100, c: 120, weight_g: 180, price: 40 },
+    { id: 'b-4s-1500', name: 'GNB 4S 1500 mAh 120C', cells: 4, capacity_mah: 1500, c: 120, weight_g: 175, price: 28 },
+    { id: 'b-6s-li-ion', name: 'Li-Ion 6S2P 4200 mAh (Molicel P42A)', cells: 6, capacity_mah: 8400, c: 7, weight_g: 560, price: 85 },
+    { id: 'b-4s-850', name: 'GNB 4S 850 mAh', cells: 4, capacity_mah: 850, c: 80, weight_g: 98, price: 18 },
+    { id: 'b-6s-850', name: 'Tattu R-Line 6S 850 mAh', cells: 6, capacity_mah: 850, c: 120, weight_g: 140, price: 36 },
+  ],
+};
+
+export const PRESETS = {
+  'Freestyle 5" 6S (HD)': { frame: 'f-apex5', motor: 'm-2207-1950', prop: 'p-5-hq', stack: 's-f7-55', vtx: 'v-o4', goggles: 'g-dji3', rx: 'r-elrs', battery: 'b-6s-1300' },
+  'Бюджетен 5" analog': { frame: 'f-source-one', motor: 'm-2306-1750', prop: 'p-5-gem', stack: 's-f7-55', vtx: 'v-analog', goggles: 'g-skyzone', rx: 'r-elrs', battery: 'b-6s-1100' },
+  'Long Range 7"': { frame: 'f-mark4-7', motor: 'm-2807-1300', prop: 'p-7', stack: 's-f7-55', vtx: 'v-walksnail', goggles: 'g-walksnail', rx: 'r-elrs900', battery: 'b-6s-li-ion' },
+  'Cinewhoop 3.5"': { frame: 'f-pavo35', motor: 'm-1804-2450', prop: 'p-35', stack: 's-20-45', vtx: 'v-o4', goggles: 'g-dji3', rx: 'r-elrs', battery: 'b-6s-850' },
+};

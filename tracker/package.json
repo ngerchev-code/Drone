@@ -1,0 +1,14 @@
+{
+  "name": "droneradar-tracker",
+  "version": "0.1.0",
+  "description": "DroneRadar: жива карта на дронове чрез Remote ID (ASTM F3411) + геозони за България",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server/server.js",
+    "demo": "node server/server.js --simulate",
+    "simulate": "node server/simulator.js",
+    "test": "node --test test/*.test.js"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "type": "FeatureCollection",
+  "name": "Примерни геозони за България",
+  "_disclaimer": "ПРИМЕРНИ, ОПРОСТЕНИ ДАННИ ЗА ДЕМОНСТРАЦИЯ. Не са официални. Преди полет проверете официалната карта на геозоните на ГВА/ДП РВД (BULATSA).",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "id": "LBSF", "name": "Летище София (зона около летището)", "restriction": "prohibited", "radius_m": 5000, "lower_m": 0, "upper_m": null, "authority": "ГВА / ДП РВД", "reason": "Летище" },
+      "geometry": { "type": "Point", "coordinates": [23.4114, 42.6967] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "LBSF-CTR", "name": "Летище София (зона с ограничение на височината)", "restriction": "restricted", "radius_m": 9000, "lower_m": 0, "upper_m": null, "authority": "ГВА / ДП РВД", "reason": "Контролирана зона, изисква разрешение" },
+      "geometry": { "type": "Point", "coordinates": [23.4114, 42.6967] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "LBWN", "name": "Летище Варна", "restriction": "prohibited", "radius_m": 5000, "lower_m": 0, "upper_m": null, "authority": "ГВА / ДП РВД", "reason": "Летище" },
+      "geometry": { "type": "Point", "coordinates": [27.8251, 43.2321] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "LBBG", "name": "Летище Бургас", "restriction": "prohibited", "radius_m": 5000, "lower_m": 0, "upper_m": null, "authority": "ГВА / ДП РВД", "reason": "Летище" },
+      "geometry": { "type": "Point", "coordinates": [27.5152, 42.5696] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "LBPD", "name": "Летище Пловдив", "restriction": "prohibited", "radius_m": 5000, "lower_m": 0, "upper_m": null, "authority": "ГВА / ДП РВД", "reason": "Летище" },
+      "geometry": { "type": "Point", "coordinates": [24.8508, 42.0678] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "LBGO", "name": "Летище Горна Оряховица", "restriction": "prohibited", "radius_m": 4000, "lower_m": 0, "upper_m": null, "authority": "ГВА / ДП РВД", "reason": "Летище" },
+      "geometry": { "type": "Point", "coordinates": [25.7129, 43.1514] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "KNPP", "name": "АЕЦ Козлодуй", "restriction": "prohibited", "radius_m": 3000, "lower_m": 0, "upper_m": null, "authority": "Критична инфраструктура", "reason": "Ядрен обект" },
+      "geometry": { "type": "Point", "coordinates": [23.7700, 43.7460] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "SOF-CENTER", "name": "София център (примерна условна зона)", "restriction": "conditional", "lower_m": 0, "upper_m": 120, "authority": "Пример", "reason": "Гъсто населено място, полет само в категория A1/A3 с ограничения" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[23.300, 42.680], [23.345, 42.680], [23.345, 42.705], [23.300, 42.705], [23.300, 42.680]]]
+      }
+    }
+  ]
+}

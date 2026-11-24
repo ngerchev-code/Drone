@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DroneBase</title>
+  <meta name="description" content="Енциклопедия на всички дронове (граждански, FPV, военни, транспортни), сравнение, FPV сглобяване с проверка за съвместимост и личен хангар.">
+  <link rel="stylesheet" href="public/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">◆ DroneBase <small>всичко за дроновете</small></div>
+    <nav id="tabs">
+      <button data-tab="catalog" class="active">Енциклопедия</button>
+      <button data-tab="compare">Сравнение <span id="cmp-count" class="badge" hidden>0</span></button>
+      <button data-tab="builder">FPV сглобяване</button>
+      <button data-tab="hangar">Хангар</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Енциклопедия -->
+    <section id="catalog" class="tab active">
+      <div class="toolbar">
+        <input id="q" type="search" placeholder="Търси: модел, производител, държава, таг…">
+        <div id="chips" class="chips"></div>
+        <select id="sort" aria-label="Подреди">
+          <option value="name">Име</option>
+          <option value="year">Година ↓</option>
+          <option value="mass_kg">Тегло ↓</option>
+          <option value="speed_kmh">Скорост ↓</option>
+          <option value="range_km">Обхват ↓</option>
+          <option value="flight_min">Време за полет ↓</option>
+          <option value="payload_kg">Товар ↓</option>
+        </select>
+      </div>
+      <p id="result-count" class="muted"></p>
+      <div id="grid" class="grid"></div>
+    </section>
+
+    <!-- Сравнение -->
+    <section id="compare" class="tab">
+      <p class="muted">Добави до 4 дрона от енциклопедията (бутон „+ Сравни“). Най-добрата стойност по всеки параметър е маркирана.</p>
+      <div id="compare-table" class="table-wrap"></div>
+    </section>
+
+    <!-- FPV сглобяване -->
+    <section id="builder" class="tab">
+      <div class="builder">
+        <div>
+          <div class="toolbar">
+            <select id="preset"><option value="">Започни от готова сглобка…</option></select>
+            <button id="clear-build" class="ghost">Изчисти</button>
+            <button id="share-build" class="ghost">Копирай линк</button>
+          </div>
+          <div id="slots" class="slots"></div>
+        </div>
+        <aside>
+          <div id="summary" class="panel"></div>
+          <div id="issues" class="panel"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Хангар -->
+    <section id="hangar" class="tab">
+      <div class="hangar">
+        <div class="panel">
+          <h3>Моите дронове</h3>
+          <form id="fleet-form" class="form-row">
+            <input name="name" placeholder="Име / прякор" required>
+            <select name="model" id="fleet-model"></select>
+            <input name="serial" placeholder="Сериен номер">
+            <button>Добави</button>
+          </form>
+          <ul id="fleet" class="list"></ul>
+        </div>
+        <div class="panel">
+          <h3>Полетен дневник</h3>
+          <form id="log-form" class="form-row">
+            <select name="drone" id="log-drone" required></select>
+            <input name="date" type="date" required>
+            <input name="minutes" type="number" min="1" placeholder="мин" required>
+            <input name="place" placeholder="Място">
+            <input name="batteries" type="number" min="0" placeholder="батерии">
+            <button>Запиши</button>
+          </form>
+          <div id="log-stats" class="stats-row"></div>
+          <ul id="log" class="list"></ul>
+        </div>
+        <div class="panel">
+          <h3>Документи и срокове</h3>
+          <form id="doc-form" class="form-row">
+            <select name="kind">
+              <option>Регистрация на оператор (ГВА)</option>
+              <option>Сертификат A1/A3</option>
+              <option>Сертификат A2</option>
+              <option>Застраховка</option>
+              <option>Разрешение за полет</option>
+            </select>
+            <input name="expires" type="date" required>
+            <button>Добави</button>
+          </form>
+          <ul id="docs" class="list"></ul>
+        </div>
+      </div>
+      <p class="muted small">Данните се пазят само в този браузър (localStorage). Синхронизация между устройства е в roadmap-а.</p>
+    </section>
+  </main>
+
+  <dialog id="detail"></dialog>
+  <footer class="muted small">Данните са ориентировъчни, от публични източници. Военната секция е само енциклопедична.</footer>
+  <script type="module" src="public/js/app.js"></script>
+</body>
+</html>

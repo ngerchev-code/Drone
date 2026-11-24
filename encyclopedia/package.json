@@ -1,0 +1,12 @@
+{
+  "name": "dronebase-encyclopedia",
+  "version": "0.1.0",
+  "description": "DroneBase: енциклопедия на всички дронове + FPV сглобяване с проверка за съвместимост + личен хангар",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node serve.js",
+    "test": "node --test test/*.test.js"
+  }
+}
