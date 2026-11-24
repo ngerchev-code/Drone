@@ -136,6 +136,16 @@ class MapController(private val context: Context) {
                 circleRadius(26f), circleColor("#FFFFFF"), circleOpacity(0.14f), circleStrokeColor("#FFFFFF"), circleStrokeWidth(1.5f),
             ),
         )
+        // цветен ореол под иконата: веднага личи видът на обекта, дори при малък мащаб
+        s.addLayer(
+            CircleLayer("targets-glow", SRC_TARGETS).withProperties(
+                circleRadius(Expression.switchCase(eq(get("sel"), literal(true)), literal(17f), literal(12f))),
+                circleColor(kindColor()),
+                circleOpacity(0.22f),
+                circleStrokeColor(kindColor()),
+                circleStrokeWidth(1.2f),
+            ),
+        )
         s.addLayer(
             SymbolLayer(LAYER_TARGETS, SRC_TARGETS).withProperties(
                 iconImage(get("kind")),
