@@ -1,13 +1,15 @@
 // Чиста Kotlin/JVM библиотека, без Android зависимости.
-// Компилира се и се тества самостоятелно:  gradle -p core test   (или ./gradlew -p core test)
+// Компилира се и се тества самостоятелно:  ./gradlew -p core test
+// Тестове срещу живите API-та (изисква интернет):  LIVE=1 ./gradlew -p core test --tests '*LiveFeedsTest*'
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("jvm") version "2.0.21"
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 group = "bg.drone"
-version = "0.1.0"
+version = "0.2.0"
 
 repositories { mavenCentral() }
 
@@ -21,13 +23,16 @@ kotlin {
 }
 
 dependencies {
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     testImplementation(kotlin("test"))
 }
 
 tasks.test {
     useJUnitPlatform()
+    environment("LIVE", System.getenv("LIVE") ?: "")
     testLogging {
-        events("passed", "failed")
+        events("passed", "failed", "skipped")
+        showStandardStreams = System.getenv("LIVE") == "1"
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }

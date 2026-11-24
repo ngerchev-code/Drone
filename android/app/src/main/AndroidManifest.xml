@@ -24,6 +24,7 @@
 
     <!-- usesCleartextTraffic: прототипът се свързва с локален http:// сървър. В продукция → само https. -->
     <application
+        android:name=".DroneRadarApp"
         android:allowBackup="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"

@@ -1,0 +1,224 @@
+package bg.drone.receiver.map
+
+import android.content.Context
+import android.graphics.PointF
+import bg.drone.rid.Target
+import bg.drone.rid.TargetKind
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.expressions.Expression.eq
+import org.maplibre.android.style.expressions.Expression.get
+import org.maplibre.android.style.expressions.Expression.literal
+import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory.circleColor
+import org.maplibre.android.style.layers.PropertyFactory.circleOpacity
+import org.maplibre.android.style.layers.PropertyFactory.circleRadius
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
+import org.maplibre.android.style.layers.PropertyFactory.iconAllowOverlap
+import org.maplibre.android.style.layers.PropertyFactory.iconIgnorePlacement
+import org.maplibre.android.style.layers.PropertyFactory.iconImage
+import org.maplibre.android.style.layers.PropertyFactory.iconRotate
+import org.maplibre.android.style.layers.PropertyFactory.iconRotationAlignment
+import org.maplibre.android.style.layers.PropertyFactory.iconSize
+import org.maplibre.android.style.layers.PropertyFactory.lineColor
+import org.maplibre.android.style.layers.PropertyFactory.lineDasharray
+import org.maplibre.android.style.layers.PropertyFactory.lineOpacity
+import org.maplibre.android.style.layers.PropertyFactory.lineWidth
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.FeatureCollection
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
+
+/**
+ * Обвивка около MapLibre: тъмна карта, слоеве за следи, обекти, избран обект,
+ * позиция на пилота и на телефона. Данните се обновяват с [render].
+ */
+class MapController(private val context: Context) {
+    private var map: MapLibreMap? = null
+    private var style: Style? = null
+    private var pending: RenderState? = null
+    private var cameraMoved = false
+
+    var onSelect: (String?) -> Unit = {}
+    var onCameraIdle: (Double, Double) -> Unit = { _, _ -> }
+
+    data class RenderState(
+        val targets: List<Target>,
+        val selectedId: String?,
+        val me: Pair<Double, Double>?,
+    )
+
+    fun attach(mapView: MapView) {
+        mapView.getMapAsync { m ->
+            map = m
+            m.uiSettings.apply {
+                setCompassMargins(0, dp(150), dp(12), 0)
+                setLogoEnabled(false)
+                setAttributionMargins(dp(8), 0, 0, dp(96))
+                setRotateGesturesEnabled(true)
+            }
+            m.cameraPosition = CameraPosition.Builder().target(LatLng(42.7, 25.3)).zoom(6.3).build()
+            m.setStyle(Style.Builder().fromJson(STYLE_JSON)) { s ->
+                style = s
+                setupLayers(s)
+                pending?.let { render(it) }
+            }
+            m.addOnMapClickListener { latLng ->
+                val pt: PointF = m.projection.toScreenLocation(latLng)
+                val box = android.graphics.RectF(pt.x - dp(18), pt.y - dp(18), pt.x + dp(18), pt.y + dp(18))
+                val hit = m.queryRenderedFeatures(box, LAYER_TARGETS).firstOrNull()
+                onSelect(hit?.getStringProperty("id"))
+                true
+            }
+            m.addOnCameraIdleListener {
+                val t = m.cameraPosition.target ?: return@addOnCameraIdleListener
+                onCameraIdle(t.latitude, t.longitude)
+            }
+        }
+    }
+
+    private fun dp(v: Int) = (v * context.resources.displayMetrics.density).toInt()
+
+    private fun setupLayers(s: Style) {
+        val density = context.resources.displayMetrics.density
+        TargetKind.entries.forEach { s.addImage(it.name, MapIcons.create(it, density)) }
+        s.addImage("me", MapIcons.me(density))
+
+        s.addSource(GeoJsonSource(SRC_TRAILS))
+        s.addSource(GeoJsonSource(SRC_TARGETS))
+        s.addSource(GeoJsonSource(SRC_SELECTED))
+        s.addSource(GeoJsonSource(SRC_OPERATOR))
+        s.addSource(GeoJsonSource(SRC_ME))
+
+        s.addLayer(
+            LineLayer(LAYER_TRAILS, SRC_TRAILS).withProperties(
+                lineColor(kindColor()),
+                lineWidth(Expression.switchCase(eq(get("sel"), literal(true)), literal(3.5f), literal(1.6f))),
+                lineOpacity(Expression.switchCase(eq(get("sel"), literal(true)), literal(0.95f), literal(0.55f))),
+            ),
+        )
+        s.addLayer(
+            LineLayer("operator-line", SRC_OPERATOR).withProperties(
+                lineColor("#A78BFA"), lineWidth(1.5f), lineDasharray(arrayOf(2f, 2f)),
+            ),
+        )
+        s.addLayer(
+            CircleLayer("operator-dot", SRC_OPERATOR).withFilter(eq(get("role"), literal("pilot"))).withProperties(
+                circleRadius(6f), circleColor("#A78BFA"), circleStrokeColor("#05080C"), circleStrokeWidth(2f),
+            ),
+        )
+        s.addLayer(
+            CircleLayer("selected-halo", SRC_SELECTED).withProperties(
+                circleRadius(26f), circleColor("#FFFFFF"), circleOpacity(0.14f), circleStrokeColor("#FFFFFF"), circleStrokeWidth(1.5f),
+            ),
+        )
+        s.addLayer(
+            SymbolLayer(LAYER_TARGETS, SRC_TARGETS).withProperties(
+                iconImage(get("kind")),
+                iconRotate(get("track")),
+                iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
+                iconAllowOverlap(true),
+                iconIgnorePlacement(true),
+                iconSize(Expression.switchCase(eq(get("sel"), literal(true)), literal(1.25f), literal(0.9f))),
+            ),
+        )
+        s.addLayer(
+            SymbolLayer("me-layer", SRC_ME).withProperties(
+                iconImage("me"), iconAllowOverlap(true), iconIgnorePlacement(true),
+            ),
+        )
+    }
+
+    private fun kindColor(): Expression {
+        val stops = TargetKind.entries.flatMap { listOf(literal(it.name), Expression.color(it.color.toInt())) }
+        return Expression.match(get("kind"), *stops.toTypedArray(), Expression.color(0xFFFFFFFF.toInt()))
+    }
+
+    fun render(state: RenderState) {
+        pending = state
+        val s = style ?: return
+        val features = state.targets.map { t ->
+            Feature.fromGeometry(Point.fromLngLat(t.lon, t.lat)).apply {
+                addStringProperty("id", t.id)
+                addStringProperty("kind", t.kind.name)
+                addNumberProperty("track", t.track ?: 0.0)
+                addBooleanProperty("sel", t.id == state.selectedId)
+            }
+        }
+        val trails = state.targets.filter { it.trail.size >= 2 }.map { t ->
+            Feature.fromGeometry(LineString.fromLngLats(t.trail.map { (la, lo) -> Point.fromLngLat(lo, la) })).apply {
+                addStringProperty("kind", t.kind.name)
+                addBooleanProperty("sel", t.id == state.selectedId)
+            }
+        }
+        val sel = state.targets.firstOrNull { it.id == state.selectedId }
+        s.getSourceAs<GeoJsonSource>(SRC_TARGETS)?.setGeoJson(FeatureCollection.fromFeatures(features))
+        s.getSourceAs<GeoJsonSource>(SRC_TRAILS)?.setGeoJson(FeatureCollection.fromFeatures(trails))
+        s.getSourceAs<GeoJsonSource>(SRC_SELECTED)?.setGeoJson(
+            FeatureCollection.fromFeatures(listOfNotNull(sel?.let { Feature.fromGeometry(Point.fromLngLat(it.lon, it.lat)) })),
+        )
+        val opFeatures = if (sel?.operatorLat != null && sel.operatorLon != null) {
+            listOf(
+                Feature.fromGeometry(Point.fromLngLat(sel.operatorLon!!, sel.operatorLat!!)).apply { addStringProperty("role", "pilot") },
+                Feature.fromGeometry(
+                    LineString.fromLngLats(listOf(Point.fromLngLat(sel.operatorLon!!, sel.operatorLat!!), Point.fromLngLat(sel.lon, sel.lat))),
+                ),
+            )
+        } else {
+            emptyList()
+        }
+        s.getSourceAs<GeoJsonSource>(SRC_OPERATOR)?.setGeoJson(FeatureCollection.fromFeatures(opFeatures))
+        s.getSourceAs<GeoJsonSource>(SRC_ME)?.setGeoJson(
+            FeatureCollection.fromFeatures(listOfNotNull(state.me?.let { Feature.fromGeometry(Point.fromLngLat(it.second, it.first)) })),
+        )
+
+        // при първата позиция на телефона центрираме веднъж
+        if (!cameraMoved && state.me != null) {
+            cameraMoved = true
+            flyTo(state.me.first, state.me.second, 9.0)
+        }
+    }
+
+    fun flyTo(lat: Double, lon: Double, zoom: Double? = null) {
+        val m = map ?: return
+        val z = zoom ?: maxOf(m.cameraPosition.zoom, 8.0)
+        m.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), z), 700)
+    }
+
+    fun follow(lat: Double, lon: Double) {
+        val m = map ?: return
+        m.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), m.cameraPosition.zoom), 900)
+    }
+
+    companion object {
+        private const val SRC_TARGETS = "targets"
+        private const val SRC_TRAILS = "trails"
+        private const val SRC_SELECTED = "selected"
+        private const val SRC_OPERATOR = "operator"
+        private const val SRC_ME = "me"
+        const val LAYER_TARGETS = "targets-layer"
+        private const val LAYER_TRAILS = "trails-layer"
+
+        // Тъмна растерна карта (CARTO Dark Matter, данни © OpenStreetMap).
+        private val STYLE_JSON = """
+            {"version":8,"name":"DroneRadar Dark",
+             "sources":{"carto":{"type":"raster","tileSize":256,"maxzoom":19,
+               "attribution":"© OpenStreetMap contributors © CARTO",
+               "tiles":["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+                        "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+                        "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png"]}},
+             "layers":[{"id":"bg","type":"background","paint":{"background-color":"#0B0F14"}},
+                       {"id":"carto","type":"raster","source":"carto"}]}
+        """.trimIndent()
+    }
+}

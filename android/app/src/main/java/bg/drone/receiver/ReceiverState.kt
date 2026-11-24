@@ -11,21 +11,41 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.UUID
 
-/** Настройки на приемника (SharedPreferences). */
+/** Настройки на приложението (SharedPreferences). */
 class Settings(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+
+    private fun bool(key: String, def: Boolean) = prefs.getBoolean(key, def)
+    private fun put(key: String, v: Boolean) = prefs.edit().putBoolean(key, v).apply()
 
     var serverUrl: String
         get() = prefs.getString("serverUrl", DEFAULT_SERVER) ?: DEFAULT_SERVER
         set(v) = prefs.edit().putString("serverUrl", v.trim().trimEnd('/')).apply()
 
+    /** Връзка с DroneRadar сървъра: изпращане на засечените дронове + показване на чуждите. */
     var uploadEnabled: Boolean
-        get() = prefs.getBoolean("upload", false)
-        set(v) = prefs.edit().putBoolean("upload", v).apply()
+        get() = bool("upload", false)
+        set(v) = put("upload", v)
 
     var demoMode: Boolean
-        get() = prefs.getBoolean("demo", false)
-        set(v) = prefs.edit().putBoolean("demo", v).apply()
+        get() = bool("demo", false)
+        set(v) = put("demo", v)
+
+    var adsbEnabled: Boolean
+        get() = bool("adsb", true)
+        set(v) = put("adsb", v)
+
+    var sondesEnabled: Boolean
+        get() = bool("sondes", true)
+        set(v) = put("sondes", v)
+
+    var alertsEnabled: Boolean
+        get() = bool("alerts", true)
+        set(v) = put("alerts", v)
+
+    var alertRadiusKm: Float
+        get() = prefs.getFloat("alertRadiusKm", 2f)
+        set(v) = prefs.edit().putFloat("alertRadiusKm", v).apply()
 
     /** Анонимен идентификатор на приемника. Не е свързан с потребителя. */
     val receiverId: String
@@ -65,7 +85,7 @@ object ReceiverState {
     private val _status = MutableStateFlow(ReceiverStatus())
     val status: StateFlow<ReceiverStatus> = _status.asStateFlow()
 
-    /** Последна позиция на приемника (lat, lon) или null. */
+    /** Последна позиция на телефона (lat, lon) или null. */
     val location = MutableStateFlow<Pair<Double, Double>?>(null)
 
     fun onFrame(source: String, frame: RidFrame, rssi: Int?) {

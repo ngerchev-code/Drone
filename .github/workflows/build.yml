@@ -36,8 +36,13 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-      - name: core тестове (Remote ID декодер, парсери, batcher)
+      - name: core тестове (Remote ID, ADS-B, SondeHub, парсери)
         run: ./gradlew -p core test --console=plain
+      - name: Живи данни (ADS-B агрегатори, SondeHub)
+        continue-on-error: true
+        env:
+          LIVE: '1'
+        run: ./gradlew -p core test --tests '*LiveFeedsTest*' --rerun-tasks --console=plain
       - name: Сглобяване на APK
         run: ./gradlew :app:assembleDebug --console=plain --stacktrace
       - uses: actions/upload-artifact@v4
@@ -45,3 +50,29 @@ jobs:
           name: droneradar-receiver-debug
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+  android-ui:
+    name: UI тест в емулатор
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: droneradar-receiver-debug
+          path: apk
+      - name: Включване на KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Емулатор + демо режим + скрийншоти
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash android/ci/ui-smoke.sh apk/app-debug.apk
