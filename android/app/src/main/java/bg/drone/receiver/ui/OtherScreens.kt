@@ -66,7 +66,7 @@ internal fun ScreenTitle(title: String, subtitle: String? = null) {
 internal fun SearchField(value: String, onChange: (String) -> Unit, hint: String) {
     OutlinedTextField(
         value = value, onValueChange = onChange, singleLine = true,
-        placeholder = { Text(hint) },
+        placeholder = { Text(hint, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
         leadingIcon = { Icon(Icons.Filled.Search, null) },
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -91,7 +91,7 @@ fun ListScreen(vm: RadarViewModel, bottomPadding: Int, onOpen: (String) -> Unit)
     }
     Column(Modifier.fillMaxSize().background(Palette.Bg)) {
         ScreenTitle("В ефира", "${list.size} обекта · подредени по разстояние ${if (me != null) "от теб" else "от центъра на картата"}")
-        SearchField(query, { query = it }, "Позивна, модел, сериен номер…")
+        SearchField(query, { query = it }, "Позивна, модел, номер…")
         Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Filter.entries.forEach { f -> FilterChip(selected = filter == f, onClick = { vm.filter.value = f }, label = { Text(f.label) }) }
         }

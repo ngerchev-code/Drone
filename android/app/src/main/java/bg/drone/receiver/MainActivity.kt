@@ -51,7 +51,7 @@ private enum class Tab(val label: String, val icon: ImageVector) {
     LIST("Списък", Icons.AutoMirrored.Filled.List),
     NEWS("Новини", Icons.Filled.Notifications),
     WIKI("Знания", Icons.Filled.Info),
-    SETTINGS("Настройки", Icons.Filled.Settings),
+    SETTINGS("Опции", Icons.Filled.Settings),
 }
 
 class MainActivity : ComponentActivity() {

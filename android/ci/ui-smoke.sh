@@ -71,7 +71,7 @@ texts news
 
 tap_text "Знания"; sleep 3
 texts wiki
-tap_text "Настройки"; sleep 3
+tap_text "Опции"; sleep 3
 texts settings
 
 adb logcat -d > "$OUT/logcat.txt"
