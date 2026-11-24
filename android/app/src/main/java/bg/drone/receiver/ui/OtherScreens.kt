@@ -311,7 +311,7 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int, controller: bg.drone.
                 onClick = {
                     val b = controller?.visibleBounds()
                     val z = controller?.zoom() ?: 10.0
-                    if (b != null) bg.drone.receiver.map.OfflineMaps.download(ctx, b, z, "Област %.3f, %.3f".format(java.util.Locale.ROOT, (b.latNorth + b.latSouth) / 2, (b.lonEast + b.lonWest) / 2))
+                    if (b != null) bg.drone.receiver.map.OfflineMaps.download(ctx, b, z, "Област %.3f, %.3f".format(java.util.Locale.ROOT, (b.getLatNorth() + b.getLatSouth()) / 2, (b.getLonEast() + b.getLonWest()) / 2))
                 },
                 enabled = controller != null && offlineProgress == null,
                 modifier = Modifier.padding(top = 6.dp),

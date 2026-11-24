@@ -351,7 +351,7 @@ class MapController(private val context: Context) {
         private const val SRC_ME = "me"
         private const val SRC_TRACK = "track"
         private const val SRC_ZONES = "zones"
-        const val DARK_STYLE_URL = STYLE_URL
+        const val DARK_STYLE_URL = "https://tiles.openfreemap.org/styles/dark"
         const val LAYER_TARGETS = "targets-layer"
         private const val LAYER_TRAILS = "trails-layer"
 

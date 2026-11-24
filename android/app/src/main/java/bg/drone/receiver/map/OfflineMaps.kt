@@ -24,6 +24,9 @@ object OfflineMaps {
 
     const val MAX_ZOOM = 14.0
 
+    private fun done(s: OfflineRegionStatus?): Boolean =
+        s != null && s.requiredResourceCount > 0 && s.completedResourceCount >= s.requiredResourceCount && s.isRequiredResourceCountPrecise
+
     fun refresh(context: Context) {
         OfflineManager.getInstance(context).listOfflineRegions(object : OfflineManager.ListOfflineRegionsCallback {
             override fun onList(offlineRegions: Array<OfflineRegion>?) {
@@ -33,7 +36,7 @@ object OfflineMaps {
                 list.forEach { r ->
                     r.getStatus(object : OfflineRegion.OfflineRegionStatusCallback {
                         override fun onStatus(status: OfflineRegionStatus?) {
-                            out += Region(r.id, String(r.metadata, Charsets.UTF_8), status?.isComplete == true, status?.completedResourceSize ?: 0, status?.completedTileCount ?: 0)
+                            out += Region(r.id, String(r.metadata, Charsets.UTF_8), done(status), status?.completedResourceSize ?: 0, status?.completedTileCount ?: 0)
                             if (out.size == list.size) _regions.value = out.sortedBy { it.name }
                         }
                         override fun onError(error: String?) {
@@ -57,8 +60,8 @@ object OfflineMaps {
                 offlineRegion.setObserver(object : OfflineRegion.OfflineRegionObserver {
                     override fun onStatusChanged(status: OfflineRegionStatus) {
                         val pct = if (status.requiredResourceCount > 0) 100.0 * status.completedResourceCount / status.requiredResourceCount else 0.0
-                        _progress.value = if (status.isComplete) null else "„$name“: %.0f%% · %.1f MB".format(pct, status.completedResourceSize / 1_048_576.0)
-                        if (status.isComplete) {
+                        _progress.value = if (done(status)) null else "„$name“: %.0f%% · %.1f MB".format(pct, status.completedResourceSize / 1_048_576.0)
+                        if (done(status)) {
                             offlineRegion.setDownloadState(OfflineRegion.STATE_INACTIVE)
                             refresh(app)
                         }
