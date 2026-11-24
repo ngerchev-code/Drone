@@ -22,6 +22,8 @@ import bg.drone.rid.FpvCatalog
 import bg.drone.rid.FpvSummary
 import bg.drone.rid.HourVerdict
 import bg.drone.rid.PilotWeather
+import bg.drone.rid.PhotoInfo
+import bg.drone.rid.Photos
 import bg.drone.rid.Encyclopedia
 import bg.drone.rid.Feeds
 import bg.drone.rid.NetworkParser
@@ -178,6 +180,39 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun clearTrack() { track.value = null }
+
+    // ---------- Снимки (като във Flightradar24) ----------
+    /** Ключ → снимка (null = търсено, няма). Ключът е id на обекта или „q:заявка“ за снимки на модел. */
+    val photos = MutableStateFlow<Map<String, PhotoInfo?>>(emptyMap())
+    private val photoInFlight = HashSet<String>()
+
+    private fun fetchPhoto(key: String, load: () -> PhotoInfo?) {
+        if (photos.value.containsKey(key) || !photoInFlight.add(key)) return
+        viewModelScope.launch {
+            val p = withContext(Dispatchers.IO) { runCatching(load).getOrNull() }
+            photos.update { it + (key to p) }
+            photoInFlight.remove(key)
+        }
+    }
+
+    private fun wiki(query: String): PhotoInfo? = Photos.parseWikipedia(Feeds.httpGet(Photos.wikipediaSearchUrl(query), 12_000))
+
+    /** Снимка за обект: първо на конкретния апарат (Planespotters по ICAO), после на модела (Wikipedia). */
+    fun requestPhoto(t: Target) {
+        val info = encyclopedia.firstOrNull { it.id == t.encyclopediaId }
+        val query = Photos.wikiQuery(t, info)
+        val hex = t.id.removePrefix("adsb:").takeIf { t.id.startsWith("adsb:") }
+        fetchPhoto(t.id) {
+            hex?.let { runCatching { Photos.parsePlanespotters(Feeds.httpGet(Photos.planespottersUrl(it), 10_000)) }.getOrNull() }
+                ?: photos.value["q:$query"]
+                ?: wiki(query)
+        }
+    }
+
+    fun photoFor(t: Target): PhotoInfo? = photos.value[t.id]
+
+    /** Снимка на модел от енциклопедията. */
+    fun requestModelPhoto(name: String) = fetchPhoto("q:$name") { wiki(name) }
 
     // ---------- FPV сглобяване ----------
     val fpvCatalog: FpvCatalog? by lazy {

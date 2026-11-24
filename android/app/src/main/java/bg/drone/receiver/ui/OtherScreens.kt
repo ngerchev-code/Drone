@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,6 +34,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -131,6 +133,7 @@ fun EncyclopediaList(vm: RadarViewModel, bottomPadding: Int) {
     var query by remember { mutableStateOf("") }
     var cat by remember { mutableStateOf<String?>(null) }
     var open by remember { mutableStateOf<DroneInfo?>(null) }
+    val photos by vm.photos.collectAsStateWithLifecycle()
     val cats = listOf(null to "Всички", "civil" to "Граждански", "fpv" to "FPV", "military" to "Военни", "transport" to "Транспортни", "naval" to "Морски")
     val list = db.filter { (cat == null || it.category == cat) && (query.isBlank() || "${it.name} ${it.maker} ${it.country} ${it.type} ${it.tags.joinToString(" ")}".contains(query, true)) }
 
@@ -142,8 +145,17 @@ fun EncyclopediaList(vm: RadarViewModel, bottomPadding: Int) {
         }
         LazyColumn(contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = (bottomPadding + 12).dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             items(list, key = { it.id }) { d ->
+                LaunchedEffect(d.id) { vm.requestModelPhoto(d.name) }
+                val photo = photos["q:${d.name}"]
                 Surface(shape = RoundedCornerShape(12.dp), color = Palette.Surface, modifier = Modifier.fillMaxWidth().clickable { open = d }) {
-                    Column(Modifier.padding(12.dp)) {
+                  Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.padding(start = 10.dp).size(76.dp).clip(RoundedCornerShape(10.dp)).background(Palette.Surface2)) {
+                        if (photo != null) coil.compose.AsyncImage(
+                            model = photo.imageUrl, contentDescription = d.name,
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                    Column(Modifier.padding(12.dp).weight(1f)) {
                         Text("${d.categoryLabel.uppercase()} · ${d.type}", color = categoryColor(d.category), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         Text(d.name, color = Palette.Text, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                         Text("${d.maker} · ${d.country}${d.year?.let { " · $it" } ?: ""}", color = Palette.Muted, fontSize = 12.sp)
@@ -154,6 +166,7 @@ fun EncyclopediaList(vm: RadarViewModel, bottomPadding: Int) {
                             Metric("скорост", d.speed_kmh?.let { "${it.toInt()} km/h" } ?: "—")
                         }
                     }
+                  }
                 }
             }
         }
@@ -163,7 +176,12 @@ fun EncyclopediaList(vm: RadarViewModel, bottomPadding: Int) {
             onDismissRequest = { open = null },
             confirmButton = { TextButton(onClick = { open = null }) { Text("Затвори") } },
             title = { Text(d.name) },
-            text = { Column(Modifier.verticalScroll(rememberScrollState())) { EncyclopediaCard(d) } },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    photos["q:${d.name}"]?.let { Box(Modifier.clip(RoundedCornerShape(12.dp))) { PhotoBanner(it, 180) } }
+                    EncyclopediaCard(d)
+                }
+            },
             containerColor = Palette.Surface,
         )
     }
@@ -297,7 +315,7 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
             KeyValue("SondeHub", "CC BY-SA")
             KeyValue("Карта", "OpenFreeMap · © OpenMapTiles · © OpenStreetMap")
             KeyValue("Новини", bg.drone.rid.News.SOURCES.joinToString(", ") { it.name })
-            KeyValue("Версия", "0.6.0")
+            KeyValue("Версия", "0.7.0")
         }
     }
 }

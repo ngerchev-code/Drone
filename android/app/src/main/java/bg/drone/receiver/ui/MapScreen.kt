@@ -68,6 +68,7 @@ import bg.drone.receiver.RadarViewModel
 import bg.drone.receiver.ReceiverState
 import bg.drone.receiver.map.MapController
 import bg.drone.rid.DroneInfo
+import bg.drone.rid.PhotoInfo
 import bg.drone.rid.Target
 import org.maplibre.android.maps.MapView
 
@@ -83,11 +84,13 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
     val sondes by vm.sondes.collectAsStateWithLifecycle()
     val network by vm.network.collectAsStateWithLifecycle()
     val receiver by vm.receiver.collectAsStateWithLifecycle()
+    val photos by vm.photos.collectAsStateWithLifecycle()
 
     val visible = remember(all, filter) { all.filter { it.kind in filter.kinds } }
     val selected = all.firstOrNull { it.id == selectedId }
     var showDetails by remember { mutableStateOf(false) }
 
+    LaunchedEffect(selectedId) { all.firstOrNull { it.id == selectedId }?.let(vm::requestPhoto) }
     LaunchedEffect(visible, selectedId, me) {
         controller.render(MapController.RenderState(visible, selectedId, me))
     }
@@ -157,7 +160,7 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
         ) {
             selected?.let { t ->
                 SelectedCard(
-                    t, me, follow,
+                    t, me, follow, photos[t.id],
                     onClose = { vm.selectedId.value = null; vm.follow.value = false },
                     onFollow = { vm.follow.value = !follow },
                     onDetails = { showDetails = true },
@@ -167,7 +170,7 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
     }
 
     if (showDetails && selected != null) {
-        TargetDetailsSheet(selected, me, vm.encyclopedia.firstOrNull { it.id == selected.encyclopediaId }) { showDetails = false }
+        TargetDetailsSheet(selected, me, vm.encyclopedia.firstOrNull { it.id == selected.encyclopediaId }, onDismiss = { showDetails = false }, photo = photos[selected.id])
     }
 }
 
@@ -277,7 +280,7 @@ private fun ScanButton(running: Boolean, demo: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SelectedCard(t: Target, me: Pair<Double, Double>?, follow: Boolean, onClose: () -> Unit, onFollow: () -> Unit, onDetails: () -> Unit) {
+private fun SelectedCard(t: Target, me: Pair<Double, Double>?, follow: Boolean, photo: PhotoInfo?, onClose: () -> Unit, onFollow: () -> Unit, onDetails: () -> Unit) {
     val context = LocalContext.current
     Surface(
         shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
@@ -286,7 +289,9 @@ private fun SelectedCard(t: Target, me: Pair<Double, Double>?, follow: Boolean, 
         shadowElevation = 12.dp,
         modifier = Modifier.fillMaxWidth().clickable(onClick = onDetails),
     ) {
-        Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp)) {
+        Column(Modifier.padding(bottom = 12.dp)) {
+          if (photo != null) PhotoBanner(photo, 150)
+          Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.width(4.dp).height(38.dp).clip(RoundedCornerShape(2.dp)).background(t.kind.uiColor))
                 Spacer(Modifier.width(10.dp))
@@ -316,16 +321,40 @@ private fun SelectedCard(t: Target, me: Pair<Double, Double>?, follow: Boolean, 
                 TextButton(onClick = onFollow) { Text(if (follow) "Следя ✓" else "Следи") }
                 TextButton(onClick = onDetails) { Text("Детайли") }
             }
+          }
+        }
+    }
+}
+
+/** Снимка с авторството отдолу (задължително за Planespotters и Wikimedia). Натискане → източника. */
+@Composable
+fun PhotoBanner(photo: PhotoInfo, heightDp: Int) {
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
+    Box(Modifier.fillMaxWidth().height(heightDp.dp).background(Palette.Surface2).clickable { uri.openUri(photo.link) }) {
+        coil.compose.AsyncImage(
+            model = photo.imageUrl, contentDescription = null,
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.fillMaxSize(),
+        )
+        Row(
+            Modifier.align(Alignment.BottomStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(photo.credit, color = Color.White, fontSize = 10.sp, maxLines = 1, modifier = Modifier.weight(1f))
+            Text(if (photo.exact) "този апарат" else "снимка на модела", color = Color.White.copy(alpha = 0.8f), fontSize = 10.sp)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TargetDetailsSheet(t: Target, me: Pair<Double, Double>?, info: DroneInfo?, onDismiss: () -> Unit) {
+fun TargetDetailsSheet(t: Target, me: Pair<Double, Double>?, info: DroneInfo?, onDismiss: () -> Unit, photo: PhotoInfo? = null) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, containerColor = Palette.Surface) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp).padding(bottom = 32.dp)) {
+            photo?.let {
+                Box(Modifier.clip(RoundedCornerShape(14.dp))) { PhotoBanner(it, 210) }
+                Spacer(Modifier.height(12.dp))
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(t.title, fontWeight = FontWeight.Bold, fontSize = 22.sp, fontFamily = FontFamily.Monospace, color = Palette.Text, modifier = Modifier.weight(1f))
                 KindBadge(t.kind)
