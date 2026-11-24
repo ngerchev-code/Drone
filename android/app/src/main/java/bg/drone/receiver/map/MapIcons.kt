@@ -23,6 +23,7 @@ object MapIcons {
             TargetKind.DRONE -> drawQuad(c, s, fill, outline, density)
             TargetKind.MILITARY_UAV, TargetKind.UAV -> drawUav(c, s, fill, outline)
             TargetKind.RADIOSONDE -> drawBalloon(c, s, fill, outline, density)
+            TargetKind.AIRCRAFT -> drawAirliner(c, s, fill, outline)
         }
         return bmp
     }
@@ -73,6 +74,26 @@ object MapIcons {
             lineTo(m - s * 0.47f, s * 0.42f)
             lineTo(m - s * 0.05f, s * 0.36f)
             lineTo(m - s * 0.05f, s * 0.2f)
+            close()
+        }
+        c.drawPath(p, fill)
+        c.drawPath(p, outline)
+    }
+
+    /** Пилотиран самолет: стреловидни крила (по-малък и сив, за да не пречи на БЛА). */
+    private fun drawAirliner(c: Canvas, s: Float, fill: Paint, outline: Paint) {
+        val m = s / 2
+        val p = Path().apply {
+            moveTo(m, s * 0.14f)
+            lineTo(m + s * 0.05f, s * 0.26f); lineTo(m + s * 0.05f, s * 0.42f)
+            lineTo(m + s * 0.36f, s * 0.6f); lineTo(m + s * 0.36f, s * 0.66f)
+            lineTo(m + s * 0.05f, s * 0.57f); lineTo(m + s * 0.04f, s * 0.74f)
+            lineTo(m + s * 0.14f, s * 0.82f); lineTo(m + s * 0.14f, s * 0.86f)
+            lineTo(m, s * 0.82f)
+            lineTo(m - s * 0.14f, s * 0.86f); lineTo(m - s * 0.14f, s * 0.82f)
+            lineTo(m - s * 0.04f, s * 0.74f); lineTo(m - s * 0.05f, s * 0.57f)
+            lineTo(m - s * 0.36f, s * 0.66f); lineTo(m - s * 0.36f, s * 0.6f)
+            lineTo(m - s * 0.05f, s * 0.42f); lineTo(m - s * 0.05f, s * 0.26f)
             close()
         }
         c.drawPath(p, fill)

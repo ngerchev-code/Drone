@@ -146,17 +146,24 @@ object UavClassifier {
         )
     }
 
-    fun toTarget(ac: AdsbAircraft, match: UavMatch, nowMs: Long): Target? {
+    fun toTarget(ac: AdsbAircraft, match: UavMatch, nowMs: Long, source: TargetSource = TargetSource.ADSB): Target? =
+        aircraftTarget(ac, nowMs, source, if (match.military) TargetKind.MILITARY_UAV else TargetKind.UAV, match.name, match.encyclopediaId, match.reason)
+
+    /** Обект за картата от ADS-B запис (БЛА или, за собствен приемник, пилотиран самолет). */
+    fun aircraftTarget(
+        ac: AdsbAircraft, nowMs: Long, source: TargetSource, kind: TargetKind,
+        name: String? = null, encyclopediaId: String? = null, reason: String? = null,
+    ): Target? {
         val lat = ac.lat ?: return null
         val lon = ac.lon ?: return null
         val ageMs = ((ac.seenPosSec ?: ac.seenSec ?: 0.0) * 1000).toLong()
         val alt = ac.altGeomFt ?: ac.altBaroFt
         return Target(
             id = "adsb:${ac.hex}",
-            source = TargetSource.ADSB,
-            kind = if (match.military) TargetKind.MILITARY_UAV else TargetKind.UAV,
+            source = source,
+            kind = kind,
             title = ac.flight ?: ac.registration ?: ac.hex.uppercase(),
-            subtitle = match.name ?: ac.description,
+            subtitle = name ?: ac.description ?: ac.typeCode,
             lat = lat,
             lon = lon,
             altitudeM = if (ac.onGround) 0.0 else alt?.times(0.3048),
@@ -167,7 +174,7 @@ object UavClassifier {
             typeCode = ac.typeCode,
             registration = ac.registration,
             callsign = ac.flight,
-            encyclopediaId = match.encyclopediaId,
+            encyclopediaId = encyclopediaId,
             details = listOfNotNull(
                 "ICAO адрес" to ac.hex.uppercase(),
                 ac.registration?.let { "Регистрация" to it },
@@ -175,7 +182,7 @@ object UavClassifier {
                 ac.description?.let { "Модел (база данни)" to it },
                 ac.squawk?.let { "Squawk" to it },
                 ac.category?.let { "ADS-B категория" to it },
-                "Разпознат по" to match.reason,
+                reason?.let { "Разпознат по" to it },
                 ac.altBaroFt?.let { "Барометрична височина" to "${it.toInt()} ft" },
                 if (ac.onGround) "Статус" to "На земята" else null,
             ),

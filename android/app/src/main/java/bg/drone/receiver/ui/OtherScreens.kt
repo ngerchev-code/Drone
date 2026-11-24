@@ -55,7 +55,7 @@ import bg.drone.rid.DroneInfo
 import bg.drone.rid.Feeds
 
 @Composable
-private fun ScreenTitle(title: String, subtitle: String? = null) {
+internal fun ScreenTitle(title: String, subtitle: String? = null) {
     Column(Modifier.statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp)) {
         Text(title, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
         subtitle?.let { Text(it, fontSize = 13.sp, color = Palette.Muted) }
@@ -63,7 +63,7 @@ private fun ScreenTitle(title: String, subtitle: String? = null) {
 }
 
 @Composable
-private fun SearchField(value: String, onChange: (String) -> Unit, hint: String) {
+internal fun SearchField(value: String, onChange: (String) -> Unit, hint: String) {
     OutlinedTextField(
         value = value, onValueChange = onChange, singleLine = true,
         placeholder = { Text(hint) },
@@ -126,7 +126,7 @@ fun ListScreen(vm: RadarViewModel, bottomPadding: Int, onOpen: (String) -> Unit)
 // ---------------------------------------------------------------- Енциклопедия
 
 @Composable
-fun EncyclopediaScreen(vm: RadarViewModel, bottomPadding: Int) {
+fun EncyclopediaList(vm: RadarViewModel, bottomPadding: Int) {
     val db = vm.encyclopedia
     var query by remember { mutableStateOf("") }
     var cat by remember { mutableStateOf<String?>(null) }
@@ -135,7 +135,7 @@ fun EncyclopediaScreen(vm: RadarViewModel, bottomPadding: Int) {
     val list = db.filter { (cat == null || it.category == cat) && (query.isBlank() || "${it.name} ${it.maker} ${it.country} ${it.type} ${it.tags.joinToString(" ")}".contains(query, true)) }
 
     Column(Modifier.fillMaxSize().background(Palette.Bg)) {
-        ScreenTitle("Енциклопедия", "${db.size} модела: граждански, FPV, военни, транспортни")
+        Spacer(Modifier.height(8.dp))
         SearchField(query, { query = it }, "Модел, производител, държава…")
         Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             cats.forEach { (k, label) -> FilterChip(selected = cat == k, onClick = { cat = k }, label = { Text(label) }) }
@@ -187,6 +187,10 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
     var upload by remember { mutableStateOf(s.uploadEnabled) }
     var url by remember { mutableStateOf(s.serverUrl) }
     var demo by remember { mutableStateOf(s.demoMode) }
+    var rx by remember { mutableStateOf(s.receiverEnabled) }
+    var rxUrl by remember { mutableStateOf(s.receiverUrl) }
+    var rxManned by remember { mutableStateOf(s.receiverManned) }
+    val rxState by vm.receiver.collectAsStateWithLifecycle()
     var alerts by remember { mutableStateOf(s.alertsEnabled) }
     var radius by remember { mutableFloatStateOf(s.alertRadiusKm) }
 
@@ -210,6 +214,24 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
                     modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                 )
                 Text("Емулатор: http://10.0.2.2:8080 · телефон в същата WiFi мрежа: http://<IP на компютъра>:8080", color = Palette.Muted, fontSize = 11.sp)
+            }
+        }
+        Group("Моят приемник (антена 1090 MHz)") {
+            Toggle("Собствен ADS-B приемник", "Raspberry Pi + RTL-SDR (~40 €) с readsb / dump1090-fa / tar1090 в същата мрежа", rx) {
+                rx = it; s.receiverEnabled = it; vm.refreshFeedFlags()
+            }
+            if (rx) {
+                OutlinedTextField(
+                    value = rxUrl, onValueChange = { rxUrl = it; s.receiverUrl = it }, singleLine = true,
+                    label = { Text("URL към aircraft.json") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                )
+                Text("Примери: http://raspberrypi.local/tar1090/data/aircraft.json · http://192.168.1.50:8080/data/aircraft.json", color = Palette.Muted, fontSize = 11.sp)
+                Toggle("Покажи и пилотираните самолети", "Всичко, което антената ти хваща (сиви икони)", rxManned) {
+                    rxManned = it; s.receiverManned = it
+                }
+                KeyValue("Състояние", when (rxState.ok) { true -> "свързан · ${rxState.count} обекта"; false -> "грешка: ${rxState.detail ?: "?"}"; null -> "свързвам се…" })
             }
         }
         Group("Сканиране за Remote ID") {
@@ -242,7 +264,8 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
             Feeds.ADSB_PROVIDERS.forEach { KeyValue(it.name, it.licence) }
             KeyValue("SondeHub", "CC BY-SA")
             KeyValue("Карта", "© OpenStreetMap, © CARTO")
-            KeyValue("Версия", "0.2.0")
+            KeyValue("Новини", bg.drone.rid.News.SOURCES.joinToString(", ") { it.name })
+            KeyValue("Версия", "0.3.0")
         }
     }
 }

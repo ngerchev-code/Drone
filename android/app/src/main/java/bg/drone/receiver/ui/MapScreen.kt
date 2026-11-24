@@ -79,6 +79,7 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
     val adsb by vm.adsb.collectAsStateWithLifecycle()
     val sondes by vm.sondes.collectAsStateWithLifecycle()
     val network by vm.network.collectAsStateWithLifecycle()
+    val receiver by vm.receiver.collectAsStateWithLifecycle()
 
     val visible = remember(all, filter) { all.filter { it.kind in filter.kinds } }
     val selected = all.firstOrNull { it.id == selectedId }
@@ -126,7 +127,7 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
                 }
             }
             Spacer(Modifier.height(4.dp))
-            FeedLine(adsb, sondes, network, scan.running, scan.demo)
+            FeedLine(adsb, sondes, network, receiver, scan.running, scan.demo)
         }
 
         // ---------- бутони вдясно ----------
@@ -195,7 +196,7 @@ private fun RadarMapView(controller: MapController) {
 }
 
 @Composable
-private fun FeedLine(adsb: FeedState, sondes: FeedState, network: FeedState, scanning: Boolean, demo: Boolean) {
+private fun FeedLine(adsb: FeedState, sondes: FeedState, network: FeedState, receiver: FeedState, scanning: Boolean, demo: Boolean) {
     @Composable
     fun item(label: String, st: FeedState) {
         if (!st.enabled) return
@@ -213,6 +214,7 @@ private fun FeedLine(adsb: FeedState, sondes: FeedState, network: FeedState, sca
         item("ADS-B", adsb)
         item("Сонди", sondes)
         item("Мрежа", network)
+        item("Приемник", receiver)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Dot(if (scanning) Palette.Accent else Palette.Muted, 6)
             Spacer(Modifier.width(4.dp))

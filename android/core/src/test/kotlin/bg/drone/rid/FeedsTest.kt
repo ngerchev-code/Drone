@@ -78,9 +78,20 @@ class FeedsTest {
             calls += url
             if ("adsb.lol" in url) throw java.io.IOException("down") else adsbJson
         }
-        assertEquals("airplanes.live", r.provider)
-        assertEquals(4, r.targets.size)
+        assertEquals("adsb.fi + airplanes.live", r.provider, "adsb.lol отпада, останалите се обединяват")
+        assertEquals(4, r.targets.size, "дубликатите от двата източника се сливат")
         assertTrue(calls.any { it == "https://api.airplanes.live/v2/point/42.7000/23.3000/250" }, "радиусът е ограничен до 250 nm: $calls")
+    }
+
+    @Test
+    fun ownReceiverAircraftJson() {
+        val json = adsbJson.replace("{\"ac\":[", "{\"now\":1,\"messages\":5,\"aircraft\":[")
+        val uavOnly = Feeds.fetchReceiver("http://pi/data/aircraft.json", now, includeManned = false) { json }
+        assertEquals(4, uavOnly.size)
+        assertTrue(uavOnly.all { it.source == TargetSource.RECEIVER })
+        val all = Feeds.fetchReceiver("http://pi/data/aircraft.json", now, includeManned = true) { json }
+        assertEquals(5, all.size, "+ Boeing 737 като пилотиран")
+        assertEquals(TargetKind.AIRCRAFT, all.first { it.id == "adsb:4ca123" }.kind)
     }
 
     @Test

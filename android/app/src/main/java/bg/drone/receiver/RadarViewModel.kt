@@ -17,12 +17,15 @@ import bg.drone.rid.DroneInfo
 import bg.drone.rid.Encyclopedia
 import bg.drone.rid.Feeds
 import bg.drone.rid.NetworkParser
+import bg.drone.rid.News
+import bg.drone.rid.NewsItem
 import bg.drone.rid.Target
 import bg.drone.rid.TargetKind
 import bg.drone.rid.TargetSource
 import bg.drone.rid.TargetStore
 import bg.drone.rid.toTarget
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,6 +46,7 @@ data class FeedState(
 
 enum class Filter(val label: String, val kinds: Set<TargetKind>) {
     ALL("Всички", TargetKind.entries.toSet()),
+    UNMANNED("Безпилотни", TargetKind.entries.toSet() - TargetKind.AIRCRAFT),
     DRONES("Дронове", setOf(TargetKind.DRONE)),
     MILITARY("Военни", setOf(TargetKind.MILITARY_UAV)),
     UAV("БЛА", setOf(TargetKind.UAV, TargetKind.MILITARY_UAV)),
@@ -63,6 +67,10 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
     val adsb = MutableStateFlow(FeedState(enabled = settings.adsbEnabled))
     val sondes = MutableStateFlow(FeedState(enabled = settings.sondesEnabled))
     val network = MutableStateFlow(FeedState(enabled = settings.uploadEnabled))
+    val receiver = MutableStateFlow(FeedState(enabled = settings.receiverEnabled))
+
+    data class NewsState(val loading: Boolean = false, val items: List<NewsItem> = emptyList(), val errors: Map<String, String> = emptyMap(), val updatedMs: Long? = null)
+    val news = MutableStateFlow(NewsState())
 
     /** Центърът на картата: ползва се за ADS-B заявката „около мен“, ако няма GPS. */
     @Volatile
@@ -80,6 +88,7 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { adsbLoop() }
         viewModelScope.launch { sondeLoop() }
         viewModelScope.launch { networkLoop() }
+        viewModelScope.launch { receiverLoop() }
     }
 
     private fun center(): Pair<Double, Double> = ReceiverState.location.value ?: mapCenter
@@ -171,10 +180,56 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    // ---------- Собствен приемник 1090 MHz (2 s) ----------
+    private suspend fun receiverLoop() {
+        while (viewModelScope.isActive) {
+            if (settings.receiverEnabled && settings.receiverUrl.isNotBlank()) {
+                val url = settings.receiverUrl
+                val result = withContext(Dispatchers.IO) {
+                    runCatching { Feeds.fetchReceiver(url, System.currentTimeMillis(), settings.receiverManned) }
+                }
+                result.onSuccess { list ->
+                    store.replace(TargetSource.RECEIVER, list)
+                    receiver.value = FeedState(true, true, list.size, url, System.currentTimeMillis())
+                }.onFailure { e ->
+                    receiver.update { it.copy(enabled = true, ok = false, detail = e.message ?: e.javaClass.simpleName) }
+                }
+                publish()
+                delay(if (result.isSuccess) 2000 else 10_000)
+            } else {
+                store.replace(TargetSource.RECEIVER, emptyList())
+                receiver.value = FeedState(enabled = false)
+                delay(2000)
+            }
+        }
+    }
+
+    // ---------- Новини (по заявка; кеш 15 мин) ----------
+    fun loadNews(force: Boolean = false) {
+        val st = news.value
+        if (st.loading) return
+        if (!force && st.updatedMs != null && System.currentTimeMillis() - st.updatedMs < 15 * 60_000) return
+        news.update { it.copy(loading = true) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                // източниците паралелно
+                val jobs = News.SOURCES.map { src -> async { News.fetchAll(listOf(src)) } }
+                jobs.map { it.await() }
+            }
+            news.value = NewsState(
+                loading = false,
+                items = r.flatMap { it.items }.distinctBy { it.link }.sortedByDescending { it.publishedMs ?: 0 },
+                errors = r.flatMap { it.errors.entries }.associate { it.key to it.value },
+                updatedMs = System.currentTimeMillis(),
+            )
+        }
+    }
+
     fun refreshFeedFlags() {
         adsb.update { it.copy(enabled = settings.adsbEnabled) }
         sondes.update { it.copy(enabled = settings.sondesEnabled) }
         network.update { it.copy(enabled = settings.uploadEnabled) }
+        receiver.update { it.copy(enabled = settings.receiverEnabled) }
     }
 
     // ---------- Аларми: дрон в радиус около мен ----------

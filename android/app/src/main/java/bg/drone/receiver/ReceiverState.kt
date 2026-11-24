@@ -39,6 +39,19 @@ class Settings(context: Context) {
         get() = bool("sondes", true)
         set(v) = put("sondes", v)
 
+    /** Собствен ADS-B приемник (readsb/dump1090/tar1090): URL към aircraft.json. */
+    var receiverEnabled: Boolean
+        get() = bool("receiver", false)
+        set(v) = put("receiver", v)
+
+    var receiverUrl: String
+        get() = prefs.getString("receiverUrl", "http://raspberrypi.local/tar1090/data/aircraft.json") ?: ""
+        set(v) = prefs.edit().putString("receiverUrl", v.trim()).apply()
+
+    var receiverManned: Boolean
+        get() = bool("receiverManned", false)
+        set(v) = put("receiverManned", v)
+
     var alertsEnabled: Boolean
         get() = bool("alerts", true)
         set(v) = put("alerts", v)

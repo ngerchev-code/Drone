@@ -17,10 +17,11 @@ data class AdsbProvider(val name: String, val militaryUrl: String, val pointUrl:
 }
 
 object Feeds {
+    // Ред по надеждност (проверено в CI): airplanes.live често отказва автоматични клиенти.
     val ADSB_PROVIDERS = listOf(
         AdsbProvider("adsb.lol", "https://api.adsb.lol/v2/mil", "https://api.adsb.lol/v2/point/{lat}/{lon}/{r}", 250, "ODbL 1.0"),
-        AdsbProvider("airplanes.live", "https://api.airplanes.live/v2/mil", "https://api.airplanes.live/v2/point/{lat}/{lon}/{r}", 250, "некомерсиална употреба"),
         AdsbProvider("adsb.fi", "https://opendata.adsb.fi/api/v2/mil", "https://opendata.adsb.fi/api/v2/lat/{lat}/lon/{lon}/dist/{r}", 250, "некомерсиална употреба"),
+        AdsbProvider("airplanes.live", "https://api.airplanes.live/v2/mil", "https://api.airplanes.live/v2/point/{lat}/{lon}/{r}", 250, "некомерсиална употреба"),
     )
 
     fun sondesUrl(lat: Double, lon: Double, distanceM: Int, lastSec: Int) =
@@ -48,7 +49,8 @@ object Feeds {
 
     /**
      * Безпилотните апарати по света (военната извадка на агрегаторите) + около дадена точка
-     * (там се хващат и граждански БЛА с категория B6).
+     * (там се хващат и граждански БЛА с категория B6). Обединява всички работещи агрегатори:
+     * всеки има различни приемници, значи различно покритие.
      */
     fun fetchUavs(
         nowMs: Long,
@@ -58,23 +60,40 @@ object Feeds {
         get: (String) -> String = { httpGet(it) },
     ): AdsbResult {
         var lastError: Exception? = null
+        val ok = ArrayList<String>()
+        val all = ArrayList<AdsbAircraft>()
         for (p in ADSB_PROVIDERS) {
             try {
-                val mil = AdsbParser.parse(get(p.militaryUrl))
-                val near = if (centerLat != null && centerLon != null) {
-                    runCatching { AdsbParser.parse(get(p.point(centerLat, centerLon, radiusNm))) }.getOrDefault(emptyList())
-                } else {
-                    emptyList()
+                all += AdsbParser.parse(get(p.militaryUrl))
+                if (centerLat != null && centerLon != null) {
+                    runCatching { all += AdsbParser.parse(get(p.point(centerLat, centerLon, radiusNm))) }
                 }
-                val all = (mil + near).distinctBy { it.hex }
-                val targets = all.mapNotNull { ac -> UavClassifier.classify(ac)?.let { UavClassifier.toTarget(ac, it, nowMs) } }
-                return AdsbResult(p.name, targets, all.size)
+                ok += p.name
             } catch (e: Exception) {
                 lastError = e
             }
         }
-        throw IOException("Нито един ADS-B източник не отговаря: ${lastError?.message}", lastError)
+        if (ok.isEmpty()) throw IOException("Нито един ADS-B източник не отговаря: ${lastError?.message}", lastError)
+        // при дубликати предпочитаме записа с позиция и с описание на модела
+        val merged = all.sortedWith(compareByDescending<AdsbAircraft> { it.lat != null }.thenByDescending { it.description != null })
+            .distinctBy { it.hex }
+        val targets = merged.mapNotNull { ac -> UavClassifier.classify(ac)?.let { UavClassifier.toTarget(ac, it, nowMs) } }
+        return AdsbResult(ok.joinToString(" + "), targets, merged.size)
     }
+
+    /**
+     * Собствен ADS-B приемник (readsb / dump1090-fa / tar1090 на Raspberry Pi с RTL-SDR):
+     * URL към aircraft.json, напр. http://raspberrypi.local/tar1090/data/aircraft.json
+     */
+    fun fetchReceiver(url: String, nowMs: Long, includeManned: Boolean, get: (String) -> String = { httpGet(it, 5000) }): List<Target> =
+        AdsbParser.parse(get(url)).mapNotNull { ac ->
+            val uav = UavClassifier.classify(ac)
+            when {
+                uav != null -> UavClassifier.toTarget(ac, uav, nowMs, TargetSource.RECEIVER)
+                includeManned -> UavClassifier.aircraftTarget(ac, nowMs, TargetSource.RECEIVER, TargetKind.AIRCRAFT)
+                else -> null
+            }
+        }
 
     fun fetchSondes(nowMs: Long, lat: Double, lon: Double, distanceM: Int = 1_000_000, get: (String) -> String = { httpGet(it, 20_000) }): List<Target> =
         SondeParser.parse(get(sondesUrl(lat, lon, distanceM, 3 * 3600)), nowMs)
@@ -95,6 +114,7 @@ class TargetStore(
     private fun maxAge(s: TargetSource) = when (s) {
         TargetSource.REMOTE_ID, TargetSource.NETWORK -> 60_000L
         TargetSource.ADSB -> 120_000L
+        TargetSource.RECEIVER -> 60_000L
         TargetSource.RADIOSONDE -> 3 * 3_600_000L
     }
 

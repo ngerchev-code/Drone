@@ -15,8 +15,9 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -37,7 +38,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import bg.drone.receiver.map.MapController
 import bg.drone.receiver.ui.DroneRadarTheme
-import bg.drone.receiver.ui.EncyclopediaScreen
+import bg.drone.receiver.ui.KnowledgeScreen
+import bg.drone.receiver.ui.NewsScreen
 import bg.drone.receiver.ui.ListScreen
 import bg.drone.receiver.ui.MapScreen
 import bg.drone.receiver.ui.Palette
@@ -45,8 +47,9 @@ import bg.drone.receiver.ui.SettingsScreen
 
 private enum class Tab(val label: String, val icon: ImageVector) {
     MAP("Карта", Icons.Filled.Place),
-    LIST("Списък", Icons.Filled.List),
-    WIKI("Енциклопедия", Icons.Filled.Info),
+    LIST("Списък", Icons.AutoMirrored.Filled.List),
+    NEWS("Новини", Icons.Filled.Notifications),
+    WIKI("Знания", Icons.Filled.Info),
     SETTINGS("Настройки", Icons.Filled.Settings),
 }
 
@@ -116,7 +119,8 @@ private fun RadarApp(vm: RadarViewModel, pendingSelect: androidx.compose.runtime
         when (tab) {
             Tab.MAP -> Unit
             Tab.LIST -> ListScreen(vm, navHeight, ::open)
-            Tab.WIKI -> EncyclopediaScreen(vm, navHeight)
+            Tab.NEWS -> NewsScreen(vm, navHeight)
+            Tab.WIKI -> KnowledgeScreen(vm, navHeight)
             Tab.SETTINGS -> SettingsScreen(vm, navHeight)
         }
         NavigationBar(containerColor = Palette.Surface, modifier = Modifier.align(Alignment.BottomCenter)) {

@@ -5,6 +5,7 @@ enum class TargetSource(val label: String) {
     REMOTE_ID("Remote ID · този телефон"),
     NETWORK("Remote ID · мрежата DroneRadar"),
     ADSB("ADS-B"),
+    RECEIVER("Моят приемник (1090 MHz)"),
     RADIOSONDE("SondeHub"),
 }
 
@@ -14,6 +15,7 @@ enum class TargetKind(val label: String, val short: String, val color: Long) {
     MILITARY_UAV("Военен БЛА", "Военен", 0xFFEF4444),
     UAV("Голям БЛА", "БЛА", 0xFFF59E0B),
     RADIOSONDE("Метеосонда", "Сонда", 0xFFA78BFA),
+    AIRCRAFT("Пилотиран самолет", "Самолет", 0xFF94A3B8),
 }
 
 /**

@@ -65,7 +65,11 @@ tap_text "Списък"; sleep 4
 shot list
 texts list
 
-tap_text "Енциклопедия"; sleep 3
+tap_text "Новини"; sleep 15
+shot news
+texts news
+
+tap_text "Знания"; sleep 3
 texts wiki
 tap_text "Настройки"; sleep 3
 texts settings
