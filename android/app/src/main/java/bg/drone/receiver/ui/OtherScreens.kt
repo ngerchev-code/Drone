@@ -297,7 +297,7 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
             KeyValue("SondeHub", "CC BY-SA")
             KeyValue("Карта", "OpenFreeMap · © OpenMapTiles · © OpenStreetMap")
             KeyValue("Новини", bg.drone.rid.News.SOURCES.joinToString(", ") { it.name })
-            KeyValue("Версия", "0.4.0")
+            KeyValue("Версия", "0.5.0")
         }
     }
 }

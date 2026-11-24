@@ -98,6 +98,38 @@ class NewsTest {
     }
 
     @Test
+    fun googleNewsBulgarianItem() {
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rss version="2.0"><channel><title>"дронове" - Google Новини</title>
+              <item>
+                <title>Български стартъп показа нов дрон за земеделие - Дневник</title>
+                <link>https://news.google.com/rss/articles/CBMiXYZ?oc=5</link>
+                <pubDate>Tue, 24 Nov 2026 09:15:00 GMT</pubDate>
+                <description>&lt;a href="https://news.google.com/rss/articles/CBMiXYZ?oc=5"&gt;Български стартъп показа нов дрон за земеделие&lt;/a&gt;&amp;nbsp;&amp;nbsp;&lt;font color="#6f6f6f"&gt;Дневник&lt;/font&gt;</description>
+                <source url="https://www.dnevnik.bg">Дневник</source>
+              </item>
+            </channel></rss>
+        """.trimIndent()
+        val item = RssParser.parse(xml, NewsSource("Дронове · България", "x", NewsCategory.BULGARIA)).single()
+        assertEquals("Български стартъп показа нов дрон за земеделие", item.title)
+        assertEquals("Дневник", item.source)
+        assertEquals("", item.summary, "резюмето на Google News повтаря заглавието → празно")
+        assertEquals(NewsCategory.BULGARIA, item.category)
+        assertTrue(News.googleNewsBg("дронове").contains("hl=bg&gl=BG&ceid=BG:bg"))
+    }
+
+    @Test
+    fun quizIsConsistent() {
+        assertTrue(Quiz.QUESTIONS.size >= 15)
+        for (q in Quiz.QUESTIONS) {
+            assertTrue(q.correct in q.options.indices, q.question)
+            assertTrue(q.options.size >= 3 && q.explanation.isNotBlank(), q.question)
+        }
+        assertEquals(Quiz.QUESTIONS.size, Quiz.QUESTIONS.map { it.question }.toSet().size)
+    }
+
+    @Test
     fun dates() {
         assertNotNull(RssParser.parseDate("Tue, 24 Nov 2026 10:30:00 +0000"))
         assertNotNull(RssParser.parseDate("Mon, 23 Nov 2026 08:00:00 GMT"))

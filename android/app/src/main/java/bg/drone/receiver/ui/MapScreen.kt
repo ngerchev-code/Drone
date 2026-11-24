@@ -108,7 +108,7 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
                     Text("LIVE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Palette.Bad,
                         modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Palette.Bad.copy(alpha = 0.15f)).padding(horizontal = 5.dp, vertical = 1.dp))
                     Spacer(Modifier.weight(1f))
-                    RegionMenu(me) { lat, lon, zoom -> controller.flyTo(lat, lon, zoom) }
+                    RegionMenu(me, controller.baseMap, onBase = { b -> controller.setBaseMap(b); vm.settings.baseMap = b.name }) { lat, lon, zoom -> controller.flyTo(lat, lon, zoom) }
                     Text("${visible.size} в ефир", color = Palette.Muted, fontSize = 13.sp)
                 }
             }
@@ -180,16 +180,20 @@ private val REGIONS = listOf(
 )
 
 @Composable
-private fun RegionMenu(me: Pair<Double, Double>?, onGo: (Double, Double, Double) -> Unit) {
+private fun RegionMenu(me: Pair<Double, Double>?, base: MapController.BaseMap, onBase: (MapController.BaseMap) -> Unit, onGo: (Double, Double, Double) -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
-        TextButton(onClick = { open = true }) { Text("Регион ▾", fontSize = 13.sp) }
+        TextButton(onClick = { open = true }) { Text("Изглед ▾", fontSize = 13.sp) }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             if (me != null) {
                 DropdownMenuItem(text = { Text("Около мен") }, onClick = { open = false; onGo(me.first, me.second, 11.0) })
             }
             REGIONS.forEach { r ->
                 DropdownMenuItem(text = { Text(r.name) }, onClick = { open = false; onGo(r.lat, r.lon, r.zoom) })
+            }
+            androidx.compose.material3.HorizontalDivider()
+            MapController.BaseMap.entries.forEach { b ->
+                DropdownMenuItem(text = { Text((if (b == base) "✓ " else "   ") + b.label) }, onClick = { open = false; onBase(b) })
             }
         }
     }

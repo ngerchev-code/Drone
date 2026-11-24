@@ -89,7 +89,11 @@ class MainActivity : ComponentActivity() {
 private fun RadarApp(vm: RadarViewModel, pendingSelect: androidx.compose.runtime.MutableState<String?>) {
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(Tab.MAP) }
-    val controller = remember { MapController(context) }
+    val controller = remember {
+        MapController(context).also { c ->
+            runCatching { MapController.BaseMap.valueOf(vm.settings.baseMap) }.getOrNull()?.let { c.setBaseMap(it) }
+        }
+    }
     controller.onSelect = { id -> vm.selectedId.value = id; if (id == null) vm.follow.value = false }
     controller.onCameraIdle = { lat, lon -> vm.mapCenter = lat to lon }
 

@@ -12,6 +12,8 @@ import java.util.Locale
 import javax.xml.parsers.DocumentBuilderFactory
 
 enum class NewsCategory(val label: String) {
+    BULGARIA("България"),
+    EVENTS("Събития"),
     CIVIL("Граждански"),
     MILITARY("Военни"),
     INDUSTRY("Индустрия"),
@@ -43,7 +45,15 @@ object News {
         RegexOption.IGNORE_CASE,
     )
 
+    /** Google News търсене на български (RSS, без ключ). */
+    fun googleNewsBg(query: String): String =
+        "https://news.google.com/rss/search?q=" + URLEncoder.encode("$query when:30d", "UTF-8") + "&hl=bg&gl=BG&ceid=BG:bg"
+
     val SOURCES = listOf(
+        NewsSource("Дронове · България", googleNewsBg("дрон OR дронове OR безпилотни OR безпилотен"), NewsCategory.BULGARIA),
+        NewsSource("Фирми и софтуер · БГ", googleNewsBg("(дрон OR дронове OR БЛА) (фирма OR компания OR стартъп OR софтуер OR завод OR производство) България"), NewsCategory.BULGARIA),
+        NewsSource("Отбрана · БГ", googleNewsBg("(дронове OR БЛА OR безпилотни OR \"морски дрон\") (армия OR отбрана OR ВМС OR МО OR НАТО) България"), NewsCategory.BULGARIA),
+        NewsSource("Събития · БГ", googleNewsBg("(дрон OR дронове OR БЛА) (семинар OR конференция OR изложение OR обучение OR курс OR хакатон OR форум OR среща)"), NewsCategory.EVENTS),
         NewsSource("DroneDJ", "https://dronedj.com/feed/", NewsCategory.CIVIL),
         NewsSource("DroneXL", "https://dronexl.co/feed/", NewsCategory.CIVIL),
         NewsSource("DroneLife", "https://dronelife.com/feed/", NewsCategory.INDUSTRY),
@@ -93,13 +103,18 @@ object RssParser {
             ?: return null
         val rawSummary = text(e, "description") ?: text(e, "summary") ?: text(e, "encoded") ?: text(e, "content") ?: ""
         val date = (text(e, "pubDate") ?: text(e, "published") ?: text(e, "updated") ?: text(e, "date"))?.let(::parseDate)
+        // Google News: <source>Издание</source> и заглавие „… - Издание“
+        val outlet = text(e, "source")?.ifBlank { null }
+        val cleanTitle = if (outlet != null && title.endsWith(" - $outlet")) title.removeSuffix(" - $outlet") else title
+        val summaryText = clean(rawSummary).let { if (outlet != null) it.removeSuffix(outlet).trim() else it }
         return NewsItem(
-            title = title,
+            title = cleanTitle,
             link = link.trim(),
-            source = s.name,
+            source = outlet ?: s.name,
             category = s.category,
             publishedMs = date,
-            summary = clean(rawSummary).let { if (it.length > 260) it.take(257).trimEnd() + "…" else it },
+            summary = summaryText.let { if (it == cleanTitle || it.startsWith(cleanTitle)) "" else it }
+                .let { if (it.length > 260) it.take(257).trimEnd() + "…" else it },
             imageUrl = image(e, rawSummary + " " + (text(e, "encoded") ?: "")),
         )
     }

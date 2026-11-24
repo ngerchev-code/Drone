@@ -68,11 +68,11 @@ class MapController(private val context: Context) {
                 setRotateGesturesEnabled(true)
             }
             m.cameraPosition = CameraPosition.Builder().target(LatLng(42.7, 25.3)).zoom(6.3).build()
-            loadStyle(m, Style.Builder().fromUri(STYLE_URL))
+            loadStyle(m, builderFor(baseMap))
             // при неуспех: още 2 опита с векторния стил (мрежата често е бавна при старт),
             // после резервна растерна карта (OSM)
             mapView.addOnDidFailLoadingMapListener {
-                if (style != null || usingFallback) return@addOnDidFailLoadingMapListener
+                if (style != null || usingFallback || baseMap != BaseMap.DARK) return@addOnDidFailLoadingMapListener
                 if (styleAttempts < 3) {
                     styleAttempts++
                     mapView.postDelayed({ if (style == null && !usingFallback) loadStyle(m, Style.Builder().fromUri(STYLE_URL)) }, 2500L * styleAttempts)
@@ -96,6 +96,41 @@ class MapController(private val context: Context) {
     }
 
     private var usingFallback = false
+
+    enum class BaseMap(val label: String) { DARK("Тъмна карта"), SATELLITE("Сателит (Sentinel-2)"), SATELLITE_TODAY("Сателит: последна снимка (NASA)") }
+
+    var baseMap: BaseMap = BaseMap.DARK
+        private set
+
+    /** Смяна на основната карта; нашите слоеве се добавят отново върху новия стил. */
+    fun setBaseMap(b: BaseMap) {
+        if (b == baseMap && style != null) return
+        baseMap = b
+        usingFallback = false
+        styleAttempts = 1
+        map?.let { loadStyle(it, builderFor(b)) }
+    }
+
+    private fun builderFor(b: BaseMap): Style.Builder = when (b) {
+        BaseMap.DARK -> Style.Builder().fromUri(STYLE_URL)
+        BaseMap.SATELLITE -> Style.Builder().fromJson(rasterStyle(
+            "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/g/{z}/{y}/{x}.jpg", 15,
+            "Sentinel-2 cloudless 2023 by EOX IT Services GmbH (modified Copernicus Sentinel data)",
+        ))
+        BaseMap.SATELLITE_TODAY -> {
+            // VIIRS (Suomi NPP) от вчера по UTC: днешната мозайка често още не е готова
+            val day = java.time.LocalDate.now(java.time.ZoneOffset.UTC).minusDays(1).toString()
+            Style.Builder().fromJson(rasterStyle(
+                "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/$day/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg", 9,
+                "NASA EOSDIS GIBS · VIIRS $day",
+            ))
+        }
+    }
+
+    private fun rasterStyle(tiles: String, maxZoom: Int, attribution: String) = """
+        {"version":8,"sources":{"sat":{"type":"raster","tileSize":256,"maxzoom":$maxZoom,"attribution":"$attribution","tiles":["$tiles"]}},
+         "layers":[{"id":"bg","type":"background","paint":{"background-color":"#0B0F14"}},{"id":"sat","type":"raster","source":"sat"}]}
+    """.trimIndent()
     private var styleAttempts = 1
 
     private fun loadStyle(m: MapLibreMap, builder: Style.Builder) {

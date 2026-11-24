@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,7 +29,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.border
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -58,6 +62,7 @@ import bg.drone.rid.Detection
 import bg.drone.rid.Frequencies
 import bg.drone.rid.News
 import bg.drone.rid.NewsCategory
+import bg.drone.rid.Quiz
 import coil.compose.AsyncImage
 
 // ---------------------------------------------------------------- Новини
@@ -127,6 +132,8 @@ fun NewsScreen(vm: RadarViewModel, bottomPadding: Int) {
 }
 
 private fun newsColor(c: NewsCategory) = when (c) {
+    NewsCategory.BULGARIA -> Palette.Ok
+    NewsCategory.EVENTS -> Color(0xFFE879F9)
     NewsCategory.CIVIL -> Palette.Accent
     NewsCategory.MILITARY -> Palette.Bad
     NewsCategory.INDUSTRY -> Palette.Warn
@@ -141,13 +148,17 @@ fun KnowledgeScreen(vm: RadarViewModel, bottomPadding: Int) {
         Column(Modifier.statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 12.dp)) {
             Text("Знания", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
         }
-        TabRow(selectedTabIndex = sub, containerColor = Palette.Bg, contentColor = Palette.Accent) {
+        ScrollableTabRow(selectedTabIndex = sub, containerColor = Palette.Bg, contentColor = Palette.Accent, edgePadding = 8.dp) {
             Tab(selected = sub == 0, onClick = { sub = 0 }, text = { Text("Модели (${vm.encyclopedia.size})") })
-            Tab(selected = sub == 1, onClick = { sub = 1 }, text = { Text("Честоти (${Frequencies.BANDS.size})") })
+            Tab(selected = sub == 1, onClick = { sub = 1 }, text = { Text("Честоти") })
+            Tab(selected = sub == 2, onClick = { sub = 2 }, text = { Text("Тренировка A1/A3") })
+            Tab(selected = sub == 3, onClick = { sub = 3 }, text = { Text("Общност") })
         }
         when (sub) {
             0 -> EncyclopediaList(vm, bottomPadding)
-            else -> FrequencyList(bottomPadding)
+            1 -> FrequencyList(bottomPadding)
+            2 -> QuizView(bottomPadding)
+            else -> CommunityView(bottomPadding)
         }
     }
 }
@@ -193,5 +204,116 @@ private fun FrequencyList(bottomPadding: Int) {
                 }
             }
         }
+    }
+}
+
+// ---------------------------------------------------------------- Тренировка за изпита A1/A3
+
+@Composable
+private fun QuizView(bottomPadding: Int) {
+    val questions = Quiz.QUESTIONS
+    var index by rememberSaveable { mutableIntStateOf(0) }
+    var picked by rememberSaveable { mutableStateOf<Int?>(null) }
+    var score by rememberSaveable { mutableIntStateOf(0) }
+    val done = index >= questions.size
+
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = (bottomPadding + 16).dp),
+    ) {
+        Text("Упражнение по Регламент (ЕС) 2019/947. Не е официалният тест на ГВА.", color = Palette.Muted, fontSize = 12.sp)
+        Spacer(Modifier.height(10.dp))
+        if (done) {
+            val pct = score * 100 / questions.size
+            Text("Резултат: $score от ${questions.size} ($pct%)", color = Palette.Text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(
+                if (pct >= 75) "Готов си за онлайн теста A1/A3 на ГВА (прагът е 75%)." else "Още малко упражнения: прагът на истинския тест е 75%.",
+                color = if (pct >= 75) Palette.Ok else Palette.Warn, fontSize = 14.sp,
+            )
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = { index = 0; picked = null; score = 0 }) { Text("Отначало") }
+            return@Column
+        }
+        val q = questions[index]
+        Text("Въпрос ${index + 1} от ${questions.size} · верни: $score", color = Palette.Accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
+        Text(q.question, color = Palette.Text, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, lineHeight = 24.sp)
+        Spacer(Modifier.height(12.dp))
+        q.options.forEachIndexed { i, opt ->
+            val state = when {
+                picked == null -> 0
+                i == q.correct -> 1
+                i == picked -> 2
+                else -> 0
+            }
+            val border = when (state) { 1 -> Palette.Ok; 2 -> Palette.Bad; else -> Palette.Line }
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = when (state) { 1 -> Palette.Ok.copy(alpha = 0.15f); 2 -> Palette.Bad.copy(alpha = 0.15f); else -> Palette.Surface },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, border, RoundedCornerShape(12.dp))
+                    .clickable(enabled = picked == null) { picked = i; if (i == q.correct) score++ },
+            ) {
+                Text(opt, color = Palette.Text, fontSize = 15.sp, modifier = Modifier.padding(14.dp))
+            }
+        }
+        if (picked != null) {
+            Spacer(Modifier.height(8.dp))
+            Text(if (picked == q.correct) "✓ Вярно" else "✗ Грешно", color = if (picked == q.correct) Palette.Ok else Palette.Bad, fontWeight = FontWeight.Bold)
+            Text(q.explanation, color = Palette.Muted, fontSize = 13.sp)
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = { index++; picked = null }, colors = ButtonDefaults.buttonColors(containerColor = Palette.Accent, contentColor = Color.Black)) {
+                Text(if (index + 1 < questions.size) "Следващ въпрос" else "Виж резултата")
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- Общност
+
+@Composable
+private fun CommunityView(bottomPadding: Int) {
+    val uri = LocalUriHandler.current
+    @Composable
+    fun card(title: String, text: String, vararg links: Pair<String, String>) {
+        Surface(shape = RoundedCornerShape(14.dp), color = Palette.Surface, modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+            Column(Modifier.padding(14.dp)) {
+                Text(title, color = Palette.Text, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Spacer(Modifier.height(4.dp))
+                Text(text, color = Palette.Muted, fontSize = 13.sp)
+                Row(Modifier.horizontalScroll(rememberScrollState())) {
+                    links.forEach { (label, url) -> TextButton(onClick = { uri.openUri(url) }) { Text(label) } }
+                }
+            }
+        }
+    }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = (bottomPadding + 16).dp)) {
+        card(
+            "Разработчици",
+            "DroneRadar е с отворен код. Идеи, грешки и предложения се пишат като Issue. Програмистите могат да изпращат промени (pull requests): декодер на Remote ID, парсери, Android и уеб.",
+            "Код в GitHub" to "https://github.com/ngerchev-code/Drone",
+            "Идеи и грешки" to "https://github.com/ngerchev-code/Drone/issues",
+        )
+        card(
+            "Стани част от мрежата",
+            "Включи „Мрежа DroneRadar“ в Опции: дроновете, които телефонът ти засича, се появяват и при другите. Със собствена антена 1090 MHz (Raspberry Pi + RTL-SDR) покриваш стотици километри.",
+            "Как се прави приемник" to "https://github.com/wiedehopf/adsb-scripts",
+        )
+        card(
+            "Събития, семинари, срещи",
+            "Новини → „Събития“ събира автоматично обявите за конференции, изложения, обучения и хакатони за дронове в България от последните 30 дни.",
+        )
+        card(
+            "Правила и регистрация",
+            "Регистрация на оператор, онлайн изпит A1/A3, геозони и разрешения: ГВА. Общоевропейските правила: EASA.",
+            "ГВА" to "https://www.caa.bg",
+            "EASA: дронове" to "https://www.easa.europa.eu/en/domains/drones-air-mobility",
+        )
+        card(
+            "Отворени данни, на които стъпва приложението",
+            "Можеш да помогнеш и директно, като свържеш своя приемник към тези мрежи.",
+            "adsb.lol" to "https://adsb.lol",
+            "adsb.fi" to "https://adsb.fi",
+            "SondeHub" to "https://sondehub.org",
+            "OpenDroneID" to "https://github.com/opendroneid",
+        )
     }
 }

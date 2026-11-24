@@ -52,6 +52,10 @@ class Settings(context: Context) {
         get() = bool("receiverManned", false)
         set(v) = put("receiverManned", v)
 
+    var baseMap: String
+        get() = prefs.getString("baseMap", "DARK") ?: "DARK"
+        set(v) = prefs.edit().putString("baseMap", v).apply()
+
     var alertsEnabled: Boolean
         get() = bool("alerts", true)
         set(v) = put("alerts", v)

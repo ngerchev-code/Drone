@@ -33,7 +33,10 @@ jobs:
             https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/3/2/4 \
             https://tile.openstreetmap.org/3/4/2.png \
             https://basemaps.cartocdn.com/dark_all/3/4/2.png \
-            https://demotiles.maplibre.org/style.json; do
+            https://demotiles.maplibre.org/style.json \
+            https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/g/6/22/36.jpg \
+            "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/$(date -u -d yesterday +%F)/GoogleMapsCompatible_Level9/6/22/36.jpg" \
+            "https://news.google.com/rss/search?q=%D0%B4%D1%80%D0%BE%D0%BD%D0%BE%D0%B2%D0%B5&hl=bg&gl=BG&ceid=BG:bg"; do
             printf '%s -> ' "$u"; curl -s -o /tmp/t -w '%{http_code} %{content_type} %{size_download}\n' -A 'DroneRadar-CI' "$u"
             head -c 160 /tmp/t | tr -d '\n' | grep -a -o '"name":"[^"]*"' || true
           done
@@ -88,6 +91,18 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Емулатор + демо режим + скрийншоти
+        id: ui1
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash android/ci/ui-smoke.sh apk/app-debug.apk
+      - name: Втори опит (при срив на инфраструктурата, напр. сваляне на образа)
+        if: steps.ui1.outcome == 'failure'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 33
@@ -112,8 +127,8 @@ jobs:
       - run: mv apk/app-debug.apk apk/DroneRadar.apk
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: droneradar-v0.4.${{ github.run_number }}
-          name: DroneRadar 0.4 (сглобяване ${{ github.run_number }})
+          tag_name: droneradar-v0.5.${{ github.run_number }}
+          name: DroneRadar 0.5 (сглобяване ${{ github.run_number }})
           target_commitish: ${{ github.sha }}
           make_latest: 'true'
           files: apk/DroneRadar.apk
