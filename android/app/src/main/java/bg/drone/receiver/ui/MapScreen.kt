@@ -26,6 +26,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -106,6 +108,7 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
                     Text("LIVE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Palette.Bad,
                         modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Palette.Bad.copy(alpha = 0.15f)).padding(horizontal = 5.dp, vertical = 1.dp))
                     Spacer(Modifier.weight(1f))
+                    RegionMenu(me) { lat, lon, zoom -> controller.flyTo(lat, lon, zoom) }
                     Text("${visible.size} в ефир", color = Palette.Muted, fontSize = 13.sp)
                 }
             }
@@ -163,6 +166,32 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
 
     if (showDetails && selected != null) {
         TargetDetailsSheet(selected, me, vm.encyclopedia.firstOrNull { it.id == selected.encyclopediaId }) { showDetails = false }
+    }
+}
+
+private data class Region(val name: String, val lat: Double, val lon: Double, val zoom: Double)
+
+private val REGIONS = listOf(
+    Region("България", 42.7, 25.3, 6.3),
+    Region("Черно море", 43.4, 34.0, 5.2),
+    Region("Балкани", 43.0, 21.5, 5.0),
+    Region("Европа", 50.0, 15.0, 3.4),
+    Region("Свят", 30.0, 10.0, 1.3),
+)
+
+@Composable
+private fun RegionMenu(me: Pair<Double, Double>?, onGo: (Double, Double, Double) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        TextButton(onClick = { open = true }) { Text("Регион ▾", fontSize = 13.sp) }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (me != null) {
+                DropdownMenuItem(text = { Text("Около мен") }, onClick = { open = false; onGo(me.first, me.second, 11.0) })
+            }
+            REGIONS.forEach { r ->
+                DropdownMenuItem(text = { Text(r.name) }, onClick = { open = false; onGo(r.lat, r.lon, r.zoom) })
+            }
+        }
     }
 }
 

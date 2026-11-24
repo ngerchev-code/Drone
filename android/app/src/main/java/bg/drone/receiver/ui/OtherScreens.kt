@@ -131,7 +131,7 @@ fun EncyclopediaList(vm: RadarViewModel, bottomPadding: Int) {
     var query by remember { mutableStateOf("") }
     var cat by remember { mutableStateOf<String?>(null) }
     var open by remember { mutableStateOf<DroneInfo?>(null) }
-    val cats = listOf(null to "Всички", "civil" to "Граждански", "fpv" to "FPV", "military" to "Военни", "transport" to "Транспортни")
+    val cats = listOf(null to "Всички", "civil" to "Граждански", "fpv" to "FPV", "military" to "Военни", "transport" to "Транспортни", "naval" to "Морски")
     val list = db.filter { (cat == null || it.category == cat) && (query.isBlank() || "${it.name} ${it.maker} ${it.country} ${it.type} ${it.tags.joinToString(" ")}".contains(query, true)) }
 
     Column(Modifier.fillMaxSize().background(Palette.Bg)) {
@@ -173,6 +173,7 @@ private fun categoryColor(c: String) = when (c) {
     "civil" -> Palette.Ok
     "fpv" -> androidx.compose.ui.graphics.Color(0xFFF97316)
     "military" -> Palette.Bad
+    "naval" -> androidx.compose.ui.graphics.Color(0xFF14B8A6)
     else -> androidx.compose.ui.graphics.Color(0xFF3B82F6)
 }
 
@@ -193,6 +194,9 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
     val rxState by vm.receiver.collectAsStateWithLifecycle()
     var alerts by remember { mutableStateOf(s.alertsEnabled) }
     var radius by remember { mutableFloatStateOf(s.alertRadiusKm) }
+    var miles by remember { mutableStateOf(s.alertMiles) }
+    var alertAdsb by remember { mutableStateOf(s.alertAdsb) }
+    var alertSondes by remember { mutableStateOf(s.alertSondes) }
 
     Column(Modifier.fillMaxSize().background(Palette.Bg).verticalScroll(rememberScrollState()).padding(bottom = (bottomPadding + 16).dp)) {
         ScreenTitle("Настройки")
@@ -231,7 +235,11 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
                 Toggle("Покажи и пилотираните самолети", "Всичко, което антената ти хваща (сиви икони)", rxManned) {
                     rxManned = it; s.receiverManned = it
                 }
-                KeyValue("Състояние", when (rxState.ok) { true -> "свързан · ${rxState.count} обекта"; false -> "грешка: ${rxState.detail ?: "?"}"; null -> "свързвам се…" })
+                when (rxState.ok) {
+                    true -> KeyValue("Състояние", "свързан · ${rxState.count} обекта")
+                    false -> Text(rxState.detail ?: "Грешка", color = Palette.Warn, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+                    null -> KeyValue("Състояние", "свързвам се…")
+                }
             }
         }
         Group("Сканиране за Remote ID") {
@@ -245,11 +253,35 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
             scan.message?.let { Text(it, color = Palette.Warn, fontSize = 12.sp) }
         }
         Group("Аларми") {
-            Toggle("Известие при дрон наблизо", "Само за дронове с Remote ID (тези, които летят ниско около теб)", alerts) {
+            Toggle("Известие при безпилотен апарат наблизо", "Дронове с Remote ID около теб винаги, плюс избраните по-долу", alerts) {
                 alerts = it; s.alertsEnabled = it
             }
-            Text("Радиус: ${"%.1f".format(radius)} km", color = Palette.Text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
-            Slider(value = radius, onValueChange = { radius = it }, onValueChangeFinished = { s.alertRadiusKm = radius }, valueRange = 0.5f..10f, steps = 18)
+            if (alerts) {
+                Toggle("Големи и военни БЛА (ADS-B)", "Напр. RQ-4 / MQ-9 над Черно море, когато излъчват позицията си", alertAdsb) {
+                    alertAdsb = it; s.alertAdsb = it
+                }
+                Toggle("Метеосонди", "Балони, които падат близо до теб", alertSondes) {
+                    alertSondes = it; s.alertSondes = it
+                }
+                val kmPerMile = 1.609344f
+                val shown = if (miles) radius / kmPerMile else radius
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        if (miles) "Радиус: ${"%.0f".format(shown)} мили (${"%.0f".format(radius)} km)" else "Радиус: ${"%.1f".format(radius)} km (${"%.0f".format(radius / kmPerMile)} мили)",
+                        color = Palette.Text, fontSize = 14.sp, modifier = Modifier.weight(1f),
+                    )
+                    FilterChip(selected = !miles, onClick = { miles = false; s.alertMiles = false }, label = { Text("km") })
+                    Spacer(Modifier.width(6.dp))
+                    FilterChip(selected = miles, onClick = { miles = true; s.alertMiles = true }, label = { Text("мили") })
+                }
+                Slider(
+                    value = shown,
+                    onValueChange = { v -> radius = if (miles) v * kmPerMile else v },
+                    onValueChangeFinished = { s.alertRadiusKm = radius },
+                    valueRange = if (miles) 0.5f..50f else 0.5f..80f,
+                )
+                Text("До 80 km / 50 мили. Remote ID се хваща на 1–2 km, затова голям радиус има смисъл главно за ADS-B БЛА.", color = Palette.Muted, fontSize = 11.sp)
+            }
         }
         Group("Какво може и какво не") {
             Text(
@@ -265,7 +297,7 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
             KeyValue("SondeHub", "CC BY-SA")
             KeyValue("Карта", "OpenFreeMap · © OpenMapTiles · © OpenStreetMap")
             KeyValue("Новини", bg.drone.rid.News.SOURCES.joinToString(", ") { it.name })
-            KeyValue("Версия", "0.3.0")
+            KeyValue("Версия", "0.4.0")
         }
     }
 }

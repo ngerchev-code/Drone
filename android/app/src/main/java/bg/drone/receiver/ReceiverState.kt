@@ -45,7 +45,7 @@ class Settings(context: Context) {
         set(v) = put("receiver", v)
 
     var receiverUrl: String
-        get() = prefs.getString("receiverUrl", "http://raspberrypi.local/tar1090/data/aircraft.json") ?: ""
+        get() = prefs.getString("receiverUrl", "") ?: ""
         set(v) = prefs.edit().putString("receiverUrl", v.trim()).apply()
 
     var receiverManned: Boolean
@@ -57,8 +57,22 @@ class Settings(context: Context) {
         set(v) = put("alerts", v)
 
     var alertRadiusKm: Float
-        get() = prefs.getFloat("alertRadiusKm", 2f)
+        get() = prefs.getFloat("alertRadiusKm", 10f)
         set(v) = prefs.edit().putFloat("alertRadiusKm", v).apply()
+
+    /** Показване на радиуса в мили вместо в километри. */
+    var alertMiles: Boolean
+        get() = bool("alertMiles", false)
+        set(v) = put("alertMiles", v)
+
+    /** Аларма и за големите/военните БЛА от ADS-B (напр. над Черно море). */
+    var alertAdsb: Boolean
+        get() = bool("alertAdsb", true)
+        set(v) = put("alertAdsb", v)
+
+    var alertSondes: Boolean
+        get() = bool("alertSondes", false)
+        set(v) = put("alertSondes", v)
 
     /** Анонимен идентификатор на приемника. Не е свързан с потребителя. */
     val receiverId: String

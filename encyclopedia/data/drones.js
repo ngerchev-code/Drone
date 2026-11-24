@@ -8,6 +8,7 @@ export const CATEGORIES = {
   fpv: { label: 'FPV', color: '#f97316' },
   military: { label: 'Военни', color: '#ef4444' },
   transport: { label: 'Транспортни', color: '#3b82f6' },
+  naval: { label: 'Морски', color: '#14b8a6' },
 };
 
 export const drones = [
@@ -192,11 +193,45 @@ export const drones = [
     camera: null, tags: ['пътници', 'без пилот', 'типов сертификат CAAC'],
     desc: 'Първият пътнически безпилотен eVTOL с типов сертификат (Китай, 2023). Превозва 2 души.',
   },
+
+  // ---------------- Морски (безекипажни плавателни съдове) ----------------
+  // Данните за военните морски дронове са оценки по публикации в медиите.
+  {
+    id: 'magura-v5', name: 'Magura V5', maker: 'ГУР / Spetstechnoexport', country: 'Украйна', category: 'naval', type: 'Безекипажен надводен апарат (USV)',
+    year: 2023, mass_kg: null, flight_min: null, range_km: 830, speed_kmh: 78, ceiling_m: null, payload_kg: 320,
+    camera: 'Дневна/нощна камера, сателитна и радиовръзка', tags: ['морски дрон', 'Черно море', 'камикадзе'],
+    desc: 'Украински морски дрон с дължина около 5,5 m. Използван срещу кораби на Черноморския флот. Има версии с ракети и FPV дронове на борда.',
+  },
+  {
+    id: 'sea-baby', name: 'Sea Baby', maker: 'СБУ', country: 'Украйна', category: 'naval', type: 'Безекипажен надводен апарат (USV)',
+    year: 2023, mass_kg: null, flight_min: null, range_km: 1000, speed_kmh: 90, ceiling_m: null, payload_kg: 850,
+    camera: 'Оптична система, сателитна връзка', tags: ['морски дрон', 'Черно море', 'Кримски мост'],
+    desc: 'Морски дрон на СБУ, свързан с атаките срещу Кримския мост и кораби. Последните версии носят до около 850 kg експлозив (по публикации).',
+  },
+  {
+    id: 'sea-hunter', name: 'Sea Hunter (ACTUV)', maker: 'Leidos / DARPA', country: 'САЩ', category: 'naval', type: 'Автономен тримаран за противолодъчна борба',
+    year: 2016, mass_kg: 135000, flight_min: null, range_km: 18500, speed_kmh: 50, ceiling_m: null, payload_kg: null,
+    camera: 'Радар, сонар, EO/IR', tags: ['автономен', 'противолодъчен', 'месеци в морето'],
+    desc: 'Автономен кораб с дължина 40 m, създаден да следи подводници седмици наред без екипаж. Сега се използва от ВМС на САЩ за изпитания.',
+  },
+  {
+    id: 'saildrone-explorer', name: 'Saildrone Explorer', maker: 'Saildrone', country: 'САЩ', category: 'naval', type: 'Ветроходен изследователски USV',
+    year: 2016, mass_kg: null, flight_min: null, range_km: null, speed_kmh: 15, ceiling_m: null, payload_kg: null,
+    camera: 'Метеорологични и океанографски сензори, камери', tags: ['соларен', 'вятър', 'до 12 месеца автономия'],
+    desc: 'Ветроходен дрон с дължина 7 m, задвижван от вятъра и слънцето. Мери океана и времето месеци наред. Използван е и в Арабския залив и Балтийско море.',
+  },
+  {
+    id: 'boeing-orca', name: 'Boeing Orca XLUUV', maker: 'Boeing', country: 'САЩ', category: 'naval', type: 'Свръхголям безекипажен подводен апарат',
+    year: 2023, mass_kg: null, flight_min: null, range_km: 12000, speed_kmh: 15, ceiling_m: null, payload_kg: null,
+    camera: 'Сонар, модулен товарен отсек', tags: ['подводен', 'автономен', 'ВМС на САЩ'],
+    desc: 'Подводен дрон с дължина около 26 m, базиран на Echo Voyager. Предвиден е за дълги автономни мисии и поставяне на мини.',
+  },
 ];
 
 /** Подсказка за EASA „Open“ подкатегория според теглото (опростено, без C-класове). */
 export function easaHint(d) {
   if (d.category === 'military') return 'Не попада под гражданските правила на EASA';
+  if (d.category === 'naval') return 'Плавателен съд: правилата на EASA за БЛА не важат';
   if (d.mass_kg == null) return '—';
   if (d.category === 'transport' && d.mass_kg >= 25) return 'Specific / Certified (над 25 kg)';
   if (d.mass_kg < 0.25) return 'A1 (под 250 g)';

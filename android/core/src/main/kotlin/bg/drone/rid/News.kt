@@ -39,7 +39,7 @@ data class NewsItem(
 
 object News {
     private val DRONE_WORDS = Regex(
-        """\b(drones?|UAVs?|UAS|unmanned|uncrewed|loitering|counter-drone|C-UAS|quadcopter|FPV|Shahed|Bayraktar|Reaper|Global Hawk|Triton|Lancet|Switchblade|kamikaze)\b""",
+        """\b(drones?|UAVs?|UAS|unmanned|uncrewed|loitering|counter-drone|C-UAS|quadcopter|FPV|Shahed|Bayraktar|Reaper|Global Hawk|Triton|Lancet|Switchblade|kamikaze|sea drones?|naval drones?|USVs?|uncrewed surface|unmanned surface|Magura|Sea Baby)\b""",
         RegexOption.IGNORE_CASE,
     )
 

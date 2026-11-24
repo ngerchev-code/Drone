@@ -183,7 +183,10 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
     // ---------- Собствен приемник 1090 MHz (2 s) ----------
     private suspend fun receiverLoop() {
         while (viewModelScope.isActive) {
-            if (settings.receiverEnabled && settings.receiverUrl.isNotBlank()) {
+            if (settings.receiverEnabled && settings.receiverUrl.isBlank()) {
+                receiver.value = FeedState(enabled = true, ok = false, detail = "Въведи адреса на приемника (aircraft.json).")
+                delay(2000)
+            } else if (settings.receiverEnabled) {
                 val url = settings.receiverUrl
                 val result = withContext(Dispatchers.IO) {
                     runCatching { Feeds.fetchReceiver(url, System.currentTimeMillis(), settings.receiverManned) }
@@ -191,17 +194,38 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
                 result.onSuccess { list ->
                     store.replace(TargetSource.RECEIVER, list)
                     receiver.value = FeedState(true, true, list.size, url, System.currentTimeMillis())
+                    receiverFailures = 0
                 }.onFailure { e ->
-                    receiver.update { it.copy(enabled = true, ok = false, detail = e.message ?: e.javaClass.simpleName) }
+                    receiverFailures++
+                    store.replace(TargetSource.RECEIVER, emptyList())
+                    receiver.update { it.copy(enabled = true, ok = false, detail = receiverError(e, url)) }
                 }
                 publish()
-                delay(if (result.isSuccess) 2000 else 10_000)
+                // при грешка: 10 s, после всяка минута (за да не се хаби батерия)
+                delay(if (result.isSuccess) 2000 else if (receiverFailures < 3) 10_000 else 60_000)
             } else {
                 store.replace(TargetSource.RECEIVER, emptyList())
                 receiver.value = FeedState(enabled = false)
                 delay(2000)
             }
         }
+    }
+
+    private var receiverFailures = 0
+
+    /** Разбираемо съобщение вместо техническата грешка. */
+    private fun receiverError(e: Throwable, url: String): String {
+        val host = runCatching { java.net.URL(url).host }.getOrDefault(url)
+        return when (e) {
+            is java.net.UnknownHostException ->
+                if (host.endsWith(".local")) "Не намирам „$host“. Много телефони не разпознават адреси .local. Въведи IP адреса на Raspberry Pi (напр. http://192.168.1.50/tar1090/data/aircraft.json). Ако нямаш приемник, изключи тази опция."
+                else "Не намирам „$host“. Провери адреса и дали си в същата WiFi мрежа."
+            is java.net.ConnectException -> "„$host“ не приема връзка. Провери дали readsb/tar1090 работи и порта в адреса."
+            is java.net.SocketTimeoutException -> "„$host“ не отговаря (изтече времето). Същата WiFi мрежа ли е?"
+            is java.net.MalformedURLException -> "Невалиден адрес. Трябва да започва с http://"
+            is java.io.IOException -> if (e.message?.contains("HTTP 404") == true) "На този адрес няма aircraft.json. Пробвай …/tar1090/data/aircraft.json или …/data/aircraft.json" else (e.message ?: "Мрежова грешка")
+            else -> "Отговорът не е aircraft.json (${e.javaClass.simpleName})."
+        } + if (receiverFailures >= 3) " Следващ опит след 1 мин." else ""
     }
 
     // ---------- Новини (по заявка; кеш 15 мин) ----------
@@ -235,15 +259,20 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
     // ---------- Аларми: дрон в радиус около мен ----------
     private fun createAlertChannel() {
         val nm = getApplication<Application>().getSystemService(NotificationManager::class.java)
-        nm?.createNotificationChannel(NotificationChannel(ALERT_CHANNEL, "Дрон наблизо", NotificationManager.IMPORTANCE_HIGH))
+        nm?.createNotificationChannel(NotificationChannel(ALERT_CHANNEL, "Безпилотен апарат наблизо", NotificationManager.IMPORTANCE_HIGH))
     }
 
     private fun checkAlerts() {
         if (!settings.alertsEnabled) return
         val me = ReceiverState.location.value ?: return
         val radiusM = settings.alertRadiusKm * 1000
+        val kinds = buildSet {
+            add(TargetKind.DRONE)
+            if (settings.alertAdsb) { add(TargetKind.MILITARY_UAV); add(TargetKind.UAV) }
+            if (settings.alertSondes) add(TargetKind.RADIOSONDE)
+        }
         for (t in _targets.value) {
-            if (t.kind != TargetKind.DRONE || t.id in alerted) continue
+            if (t.kind !in kinds || t.id in alerted) continue
             val d = t.distanceFrom(me.first, me.second)
             if (d <= radiusM) {
                 alerted += t.id
@@ -267,7 +296,7 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
         )
         val n = NotificationCompat.Builder(ctx, ALERT_CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle("Дрон на ${Format.distance(distanceM)} от теб")
+            .setContentTitle("${t.kind.label} на ${Format.distance(distanceM)} от теб")
             .setContentText("${t.title} · ${Format.altitude(t.altitudeM)} · ${t.subtitle ?: ""}")
             .setContentIntent(open)
             .setAutoCancel(true)

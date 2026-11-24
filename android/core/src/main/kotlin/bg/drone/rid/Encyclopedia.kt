@@ -28,6 +28,7 @@ data class DroneInfo(
             "fpv" -> "FPV"
             "military" -> "Военен"
             "transport" -> "Транспортен"
+            "naval" -> "Морски"
             else -> category
         }
 }
