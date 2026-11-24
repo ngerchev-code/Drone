@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.sp
 import bg.drone.receiver.map.MapController
 import bg.drone.receiver.ui.DroneRadarTheme
 import bg.drone.receiver.ui.KnowledgeScreen
@@ -129,7 +130,7 @@ private fun RadarApp(vm: RadarViewModel, pendingSelect: androidx.compose.runtime
                     selected = tab == t,
                     onClick = { tab = t },
                     icon = { Icon(t.icon, contentDescription = t.label) },
-                    label = { Text(t.label) },
+                    label = { Text(t.label, maxLines = 1, softWrap = false, fontSize = 11.sp) },
                     colors = NavigationBarItemDefaults.colors(indicatorColor = Palette.Accent.copy(alpha = 0.2f)),
                 )
             }

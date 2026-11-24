@@ -256,7 +256,8 @@ private fun SelectedCard(t: Target, me: Pair<Double, Double>?, follow: Boolean, 
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(t.title, fontWeight = FontWeight.Bold, fontSize = 19.sp, fontFamily = FontFamily.Monospace, maxLines = 1, color = Palette.Text)
+                        Text(t.title, fontWeight = FontWeight.Bold, fontSize = 19.sp, fontFamily = FontFamily.Monospace, maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, color = Palette.Text, modifier = Modifier.weight(1f, fill = false))
                         Spacer(Modifier.width(8.dp))
                         KindBadge(t.kind)
                     }
@@ -273,7 +274,8 @@ private fun SelectedCard(t: Target, me: Pair<Double, Double>?, follow: Boolean, 
             }
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("${t.source.label} · ${Format.ago(t.lastSeenMs)}", color = Palette.Muted, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                Text("${t.source.label} · ${Format.ago(t.lastSeenMs)}", color = Palette.Muted, fontSize = 12.sp, maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 TextButton(onClick = onFollow) { Text(if (follow) "Следя ✓" else "Следи") }
                 TextButton(onClick = onDetails) { Text("Детайли") }
             }

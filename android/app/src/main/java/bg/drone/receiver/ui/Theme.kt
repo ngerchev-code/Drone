@@ -71,6 +71,8 @@ fun KindBadge(kind: TargetKind) {
         color = kind.uiColor,
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,
+        maxLines = 1,
+        softWrap = false,
         modifier = Modifier
             .clip(RoundedCornerShape(4.dp))
             .background(kind.uiColor.copy(alpha = 0.15f))

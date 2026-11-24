@@ -22,6 +22,21 @@ jobs:
         working-directory: tracker
       - run: npm test
         working-directory: encyclopedia
+      - name: Картни източници без ключ (диагностика)
+        continue-on-error: true
+        run: |
+          for u in \
+            https://tiles.openfreemap.org/styles/dark \
+            https://tiles.openfreemap.org/styles/positron \
+            https://tiles.openfreemap.org/styles/liberty \
+            https://tiles.openfreemap.org/styles/fiord \
+            https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/3/2/4 \
+            https://tile.openstreetmap.org/3/4/2.png \
+            https://basemaps.cartocdn.com/dark_all/3/4/2.png \
+            https://demotiles.maplibre.org/style.json; do
+            printf '%s -> ' "$u"; curl -s -o /tmp/t -w '%{http_code} %{content_type} %{size_download}\n' -A 'DroneRadar-CI' "$u"
+            head -c 160 /tmp/t | tr -d '\n' | grep -a -o '"name":"[^"]*"' || true
+          done
 
   android:
     name: Android APK
