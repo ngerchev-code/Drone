@@ -65,6 +65,10 @@ tap_text "Списък"; sleep 4
 shot list
 texts list
 
+tap_text "Пилот"; sleep 12
+shot pilot
+texts pilot
+
 tap_text "Новини"; sleep 15
 shot news
 texts news

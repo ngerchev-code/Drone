@@ -52,6 +52,15 @@ class Settings(context: Context) {
         get() = bool("receiverManned", false)
         set(v) = put("receiverManned", v)
 
+    var droneProfile: String
+        get() = prefs.getString("droneProfile", "STANDARD") ?: "STANDARD"
+        set(v) = prefs.edit().putString("droneProfile", v).apply()
+
+    /** FPV сглобка като „slot=id;slot=id“. */
+    var fpvBuild: String
+        get() = prefs.getString("fpvBuild", "") ?: ""
+        set(v) = prefs.edit().putString("fpvBuild", v).apply()
+
     var baseMap: String
         get() = prefs.getString("baseMap", "DARK") ?: "DARK"
         set(v) = prefs.edit().putString("baseMap", v).apply()

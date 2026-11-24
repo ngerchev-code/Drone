@@ -139,6 +139,7 @@ class MapController(private val context: Context) {
             style = s
             setupLayers(s)
             pending?.let { render(it) }
+            applyTrack()
         }
     }
 
@@ -154,12 +155,25 @@ class MapController(private val context: Context) {
         s.addSource(GeoJsonSource(SRC_SELECTED))
         s.addSource(GeoJsonSource(SRC_OPERATOR))
         s.addSource(GeoJsonSource(SRC_ME))
+        s.addSource(GeoJsonSource(SRC_TRACK))
 
         s.addLayer(
             LineLayer(LAYER_TRAILS, SRC_TRAILS).withProperties(
                 lineColor(kindColor()),
                 lineWidth(Expression.switchCase(eq(get("sel"), literal(true)), literal(3.5f), literal(1.6f))),
                 lineOpacity(Expression.switchCase(eq(get("sel"), literal(true)), literal(0.95f), literal(0.55f))),
+            ),
+        )
+        s.addLayer(
+            LineLayer("track-line", SRC_TRACK).withFilter(eq(get("role"), literal("path"))).withProperties(
+                lineColor("#F472B6"), lineWidth(3.5f), lineOpacity(0.95f),
+            ),
+        )
+        s.addLayer(
+            CircleLayer("track-ends", SRC_TRACK).withFilter(Expression.neq(get("role"), literal("path"))).withProperties(
+                circleRadius(6f),
+                circleColor(Expression.match(get("role"), literal("start"), Expression.color(0xFF22C55E.toInt()), Expression.color(0xFFEF4444.toInt()))),
+                circleStrokeColor("#05080C"), circleStrokeWidth(2f),
             ),
         )
         s.addLayer(
@@ -254,6 +268,31 @@ class MapController(private val context: Context) {
         }
     }
 
+    private var track: List<bg.drone.rid.TrackPoint>? = null
+
+    /** Показва (или маха при null) импортиран полет и мести камерата към него. */
+    fun showTrack(points: List<bg.drone.rid.TrackPoint>?) {
+        track = points
+        applyTrack()
+        val m = map ?: return
+        if (points != null && points.size >= 2) {
+            val b = org.maplibre.android.geometry.LatLngBounds.Builder()
+            points.forEach { b.include(LatLng(it.lat, it.lon)) }
+            runCatching { m.animateCamera(CameraUpdateFactory.newLatLngBounds(b.build(), dp(60)), 900) }
+        }
+    }
+
+    private fun applyTrack() {
+        val s = style ?: return
+        val pts = track
+        val features = if (pts == null || pts.size < 2) emptyList() else listOf(
+            Feature.fromGeometry(LineString.fromLngLats(pts.map { Point.fromLngLat(it.lon, it.lat) })).apply { addStringProperty("role", "path") },
+            Feature.fromGeometry(Point.fromLngLat(pts.first().lon, pts.first().lat)).apply { addStringProperty("role", "start") },
+            Feature.fromGeometry(Point.fromLngLat(pts.last().lon, pts.last().lat)).apply { addStringProperty("role", "end") },
+        )
+        s.getSourceAs<GeoJsonSource>(SRC_TRACK)?.setGeoJson(FeatureCollection.fromFeatures(features))
+    }
+
     fun flyTo(lat: Double, lon: Double, zoom: Double? = null) {
         val m = map ?: return
         val z = zoom ?: maxOf(m.cameraPosition.zoom, 8.0)
@@ -271,6 +310,7 @@ class MapController(private val context: Context) {
         private const val SRC_SELECTED = "selected"
         private const val SRC_OPERATOR = "operator"
         private const val SRC_ME = "me"
+        private const val SRC_TRACK = "track"
         const val LAYER_TARGETS = "targets-layer"
         private const val LAYER_TRAILS = "trails-layer"
 

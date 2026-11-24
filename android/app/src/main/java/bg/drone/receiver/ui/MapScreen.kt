@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -71,7 +72,7 @@ import bg.drone.rid.Target
 import org.maplibre.android.maps.MapView
 
 @Composable
-fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () -> Unit, bottomPadding: Int) {
+fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () -> Unit, bottomPadding: Int, onSettings: () -> Unit = {}) {
     val all by vm.targets.collectAsStateWithLifecycle()
     val filter by vm.filter.collectAsStateWithLifecycle()
     val selectedId by vm.selectedId.collectAsStateWithLifecycle()
@@ -109,7 +110,8 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
                         modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Palette.Bad.copy(alpha = 0.15f)).padding(horizontal = 5.dp, vertical = 1.dp))
                     Spacer(Modifier.weight(1f))
                     RegionMenu(me, controller.baseMap, onBase = { b -> controller.setBaseMap(b); vm.settings.baseMap = b.name }) { lat, lon, zoom -> controller.flyTo(lat, lon, zoom) }
-                    Text("${visible.size} в ефир", color = Palette.Muted, fontSize = 13.sp)
+                    Text("${visible.size}", color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    IconButton(onClick = onSettings) { Icon(androidx.compose.material.icons.Icons.Filled.Settings, contentDescription = "Опции", tint = Palette.Muted) }
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -276,6 +278,7 @@ private fun ScanButton(running: Boolean, demo: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun SelectedCard(t: Target, me: Pair<Double, Double>?, follow: Boolean, onClose: () -> Unit, onFollow: () -> Unit, onDetails: () -> Unit) {
+    val context = LocalContext.current
     Surface(
         shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
         color = Palette.Surface,
@@ -309,6 +312,7 @@ private fun SelectedCard(t: Target, me: Pair<Double, Double>?, follow: Boolean, 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("${t.source.label} · ${Format.ago(t.lastSeenMs)}", color = Palette.Muted, fontSize = 12.sp, maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                TextButton(onClick = { bg.drone.receiver.Share.target(context, t) }) { Text("Сподели") }
                 TextButton(onClick = onFollow) { Text(if (follow) "Следя ✓" else "Следи") }
                 TextButton(onClick = onDetails) { Text("Детайли") }
             }

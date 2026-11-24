@@ -14,6 +14,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import bg.drone.rid.DroneInfo
+import bg.drone.rid.DroneProfile
+import bg.drone.rid.FlightLogParser
+import bg.drone.rid.FlightTrack
+import bg.drone.rid.FpvBuilder
+import bg.drone.rid.FpvCatalog
+import bg.drone.rid.FpvSummary
+import bg.drone.rid.HourVerdict
+import bg.drone.rid.PilotWeather
 import bg.drone.rid.Encyclopedia
 import bg.drone.rid.Feeds
 import bg.drone.rid.NetworkParser
@@ -82,6 +90,111 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
 
     private val alerted = HashSet<String>()
 
+    // ---------- История ----------
+    val history = DetectionHistory(app)
+    val historyItems = MutableStateFlow<List<Detection>>(emptyList())
+    val historyStats = MutableStateFlow<List<DayStats>>(emptyList())
+    private var tick = 0
+
+    fun loadHistory() {
+        viewModelScope.launch {
+            val (items, stats) = withContext(Dispatchers.IO) { history.recent() to history.dailyStats() }
+            historyItems.value = items
+            historyStats.value = stats
+        }
+    }
+
+    fun clearHistory() {
+        viewModelScope.launch { withContext(Dispatchers.IO) { history.clear() }; loadHistory() }
+    }
+
+    // ---------- Времето за пилоти ----------
+    data class WeatherState(
+        val loading: Boolean = false,
+        val hours: List<HourVerdict> = emptyList(),
+        val kp: Double? = null,
+        val error: String? = null,
+        val updatedMs: Long? = null,
+        val place: Pair<Double, Double>? = null,
+    )
+    val weather = MutableStateFlow(WeatherState())
+    val profile = MutableStateFlow(runCatching { DroneProfile.valueOf(settings.droneProfile) }.getOrDefault(DroneProfile.STANDARD))
+
+    fun setProfile(p: DroneProfile) {
+        profile.value = p
+        settings.droneProfile = p.name
+        val st = weather.value
+        // присъдите се преизчисляват без нова заявка
+        if (st.hours.isNotEmpty()) weather.value = st.copy(hours = st.hours.map { PilotWeather.verdict(it.hour, p, st.kp) })
+    }
+
+    fun loadWeather(force: Boolean = false) {
+        val st = weather.value
+        if (st.loading) return
+        if (!force && st.updatedMs != null && System.currentTimeMillis() - st.updatedMs < 20 * 60_000) return
+        val place = center()
+        weather.update { it.copy(loading = true, error = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching {
+                    val hours = PilotWeather.parseForecast(Feeds.httpGet(PilotWeather.forecastUrl(place.first, place.second), 15_000))
+                    val kp = runCatching { PilotWeather.parseKp(Feeds.httpGet(PilotWeather.KP_URL, 10_000)) }.getOrNull()
+                    hours to kp
+                }
+            }
+            r.onSuccess { (hours, kp) ->
+                val now = System.currentTimeMillis() - 3_600_000
+                weather.value = WeatherState(
+                    hours = hours.filter { it.timeMs >= now }.take(36).map { PilotWeather.verdict(it, profile.value, kp) },
+                    kp = kp, updatedMs = System.currentTimeMillis(), place = place,
+                )
+            }.onFailure { e -> weather.value = st.copy(loading = false, error = "Няма връзка с прогнозата: ${e.message ?: e.javaClass.simpleName}") }
+        }
+    }
+
+    // ---------- Полетни логове ----------
+    val track = MutableStateFlow<FlightTrack?>(null)
+    val trackError = MutableStateFlow<String?>(null)
+
+    fun importLog(uri: android.net.Uri) {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching {
+                    val name = ctx.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                        if (c.moveToFirst()) c.getString(0) else null
+                    } ?: "лог"
+                    val bytes = ctx.contentResolver.openInputStream(uri)?.use { input ->
+                        val buf = input.readBytes()
+                        require(buf.size <= 30 * 1024 * 1024) { "Файлът е по-голям от 30 MB" }
+                        buf
+                    } ?: error("Файлът не може да се отвори")
+                    FlightLogParser.parse(name, bytes.toString(Charsets.UTF_8))
+                }
+            }
+            r.onSuccess { track.value = it; trackError.value = null }
+                .onFailure { trackError.value = it.message ?: it.javaClass.simpleName }
+        }
+    }
+
+    fun clearTrack() { track.value = null }
+
+    // ---------- FPV сглобяване ----------
+    val fpvCatalog: FpvCatalog? by lazy {
+        runCatching { FpvCatalog.parse(app.assets.open("fpv-parts.json").bufferedReader().readText()) }.getOrNull()
+    }
+    val fpvSelection = MutableStateFlow(
+        settings.fpvBuild.split(';').mapNotNull { it.split('=').takeIf { p -> p.size == 2 }?.let { p -> p[0] to p[1] } }.toMap()
+            .ifEmpty { fpvCatalog?.presets?.values?.firstOrNull() ?: emptyMap() },
+    )
+
+    fun setFpv(sel: Map<String, String>) {
+        fpvSelection.value = sel
+        settings.fpvBuild = sel.entries.joinToString(";") { "${it.key}=${it.value}" }
+    }
+
+    fun fpvSummary(sel: Map<String, String>): FpvSummary? = fpvCatalog?.let { FpvBuilder.summarize(sel, it) }
+
     init {
         createAlertChannel()
         viewModelScope.launch { localLoop() }
@@ -103,6 +216,11 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
             store.replace(TargetSource.REMOTE_ID, ReceiverState.drones.value.mapNotNull { it.toTarget() })
             publish()
             checkAlerts()
+            if (++tick % 5 == 0) {
+                val snapshot = _targets.value
+                val me = ReceiverState.location.value
+                withContext(Dispatchers.IO) { runCatching { history.record(snapshot, me) } }
+            }
             delay(1000)
         }
     }
@@ -295,7 +413,7 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val n = NotificationCompat.Builder(ctx, ALERT_CHANNEL)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_drone)
             .setContentTitle("${t.kind.label} на ${Format.distance(distanceM)} от теб")
             .setContentText("${t.title} · ${Format.altitude(t.altitudeM)} · ${t.subtitle ?: ""}")
             .setContentIntent(open)

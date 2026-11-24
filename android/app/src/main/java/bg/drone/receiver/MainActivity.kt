@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -37,10 +38,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import bg.drone.receiver.map.MapController
 import bg.drone.receiver.ui.DroneRadarTheme
 import bg.drone.receiver.ui.KnowledgeScreen
 import bg.drone.receiver.ui.NewsScreen
+import bg.drone.receiver.ui.PilotScreen
 import bg.drone.receiver.ui.ListScreen
 import bg.drone.receiver.ui.MapScreen
 import bg.drone.receiver.ui.Palette
@@ -49,9 +52,10 @@ import bg.drone.receiver.ui.SettingsScreen
 private enum class Tab(val label: String, val icon: ImageVector) {
     MAP("Карта", Icons.Filled.Place),
     LIST("Списък", Icons.AutoMirrored.Filled.List),
+    PILOT("Пилот", Icons.Filled.Star),
     NEWS("Новини", Icons.Filled.Notifications),
     WIKI("Знания", Icons.Filled.Info),
-    SETTINGS("Опции", Icons.Filled.Settings),
+    SETTINGS("Опции", Icons.Filled.Settings), // отваря се от зъбното колело, не е в долната лента
 }
 
 class MainActivity : ComponentActivity() {
@@ -111,6 +115,10 @@ private fun RadarApp(vm: RadarViewModel, pendingSelect: androidx.compose.runtime
         vm.targets.value.firstOrNull { it.id == id }?.let { controller.flyTo(it.lat, it.lon, 11.0) }
     }
 
+    androidx.activity.compose.BackHandler(enabled = tab != Tab.MAP) { tab = Tab.MAP }
+    val track by vm.track.collectAsStateWithLifecycle()
+    LaunchedEffect(track) { controller.showTrack(track?.points) }
+
     LaunchedEffect(pendingSelect.value) {
         pendingSelect.value?.let { open(it); pendingSelect.value = null }
     }
@@ -120,16 +128,17 @@ private fun RadarApp(vm: RadarViewModel, pendingSelect: androidx.compose.runtime
     val navHeight = 80 + navInset.value.toInt()
     Box(Modifier.fillMaxSize()) {
         // Картата остава винаги заредена; другите екрани се рисуват върху нея.
-        MapScreen(vm, controller, toggleScan, bottomPadding = navHeight)
+        MapScreen(vm, controller, toggleScan, bottomPadding = navHeight, onSettings = { tab = Tab.SETTINGS })
         when (tab) {
             Tab.MAP -> Unit
             Tab.LIST -> ListScreen(vm, navHeight, ::open)
+            Tab.PILOT -> PilotScreen(vm, navHeight) { tab = Tab.MAP }
             Tab.NEWS -> NewsScreen(vm, navHeight)
             Tab.WIKI -> KnowledgeScreen(vm, navHeight)
             Tab.SETTINGS -> SettingsScreen(vm, navHeight)
         }
         NavigationBar(containerColor = Palette.Surface, modifier = Modifier.align(Alignment.BottomCenter)) {
-            Tab.entries.forEach { t ->
+            Tab.entries.filter { it != Tab.SETTINGS }.forEach { t ->
                 NavigationBarItem(
                     selected = tab == t,
                     onClick = { tab = t },

@@ -1,0 +1,737 @@
+{
+ "Freestyle 5\" 6S (HD)": {
+  "sel": {
+   "frame": "f-apex5",
+   "motor": "m-2207-1950",
+   "prop": "p-5-hq",
+   "stack": "s-f7-55",
+   "vtx": "v-o4",
+   "goggles": "g-dji3",
+   "rx": "r-elrs",
+   "battery": "b-6s-1300"
+  },
+  "issues": [
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "prop"
+    ],
+    "msg": "Перката пасва на рамката."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Отворите за моторите съвпадат (16x16 M3)."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "stack"
+    ],
+    "msg": "Стекът 30.5×30.5 mm пасва."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "motor",
+     "battery"
+    ],
+    "msg": "1950KV и 6S са добра комбинация."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "stack",
+     "motor"
+    ],
+    "msg": "ESC-то (55A) издържа на моторите."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "vtx",
+     "goggles"
+    ],
+    "msg": "Очилата приемат DJI O4."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 347,
+   "auw_g": 562,
+   "thrust_g": 6600,
+   "twr": 11.7,
+   "hoverCurrent_a": 6,
+   "hoverMin": 10.3,
+   "aggressiveMin": 3.4,
+   "price_eur": 530,
+   "totalWithGoggles_eur": 980,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Състезателен"
+  }
+ },
+ "Бюджетен 5\" analog": {
+  "sel": {
+   "frame": "f-source-one",
+   "motor": "m-2306-1750",
+   "prop": "p-5-gem",
+   "stack": "s-f7-55",
+   "vtx": "v-analog",
+   "goggles": "g-skyzone",
+   "rx": "r-elrs",
+   "battery": "b-6s-1100"
+  },
+  "issues": [
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "prop"
+    ],
+    "msg": "Перката пасва на рамката."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Отворите за моторите съвпадат (16x16 M3)."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "stack"
+    ],
+    "msg": "Стекът 30.5×30.5 mm пасва."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "motor",
+     "battery"
+    ],
+    "msg": "1750KV и 6S са добра комбинация."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "stack",
+     "motor"
+    ],
+    "msg": "ESC-то (55A) издържа на моторите."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "vtx",
+     "goggles"
+    ],
+    "msg": "Очилата приемат Analog."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 334,
+   "auw_g": 514,
+   "thrust_g": 6400,
+   "twr": 12.5,
+   "hoverCurrent_a": 5.5,
+   "hoverMin": 9.7,
+   "aggressiveMin": 3.2,
+   "price_eur": 301,
+   "totalWithGoggles_eur": 781,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Състезателен"
+  }
+ },
+ "Long Range 7\"": {
+  "sel": {
+   "frame": "f-mark4-7",
+   "motor": "m-2807-1300",
+   "prop": "p-7",
+   "stack": "s-f7-55",
+   "vtx": "v-walksnail",
+   "goggles": "g-walksnail",
+   "rx": "r-elrs900",
+   "battery": "b-6s-li-ion"
+  },
+  "issues": [
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "prop"
+    ],
+    "msg": "Перката пасва на рамката."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Отворите за моторите съвпадат (16x16 M3)."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "stack"
+    ],
+    "msg": "Стекът 30.5×30.5 mm пасва."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "motor",
+     "battery"
+    ],
+    "msg": "1300KV и 6S са добра комбинация."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "stack",
+     "motor"
+    ],
+    "msg": "ESC-то (55A) издържа на моторите."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "vtx",
+     "goggles"
+    ],
+    "msg": "Очилата приемат Walksnail."
+   },
+   {
+    "level": "warn",
+    "slots": [
+     "battery"
+    ],
+    "msg": "Батерията дава до ~59A при пик на моторите ~152A. Подходящо само за спокоен (long range) полет."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 513,
+   "auw_g": 1073,
+   "thrust_g": 8400,
+   "twr": 7.8,
+   "hoverCurrent_a": 8.8,
+   "hoverMin": 45.8,
+   "aggressiveMin": 15.3,
+   "price_eur": 455,
+   "totalWithGoggles_eur": 855,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Добър за freestyle"
+  }
+ },
+ "Cinewhoop 3.5\"": {
+  "sel": {
+   "frame": "f-pavo35",
+   "motor": "m-1804-2450",
+   "prop": "p-35",
+   "stack": "s-20-45",
+   "vtx": "v-o4",
+   "goggles": "g-dji3",
+   "rx": "r-elrs",
+   "battery": "b-6s-850"
+  },
+  "issues": [
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "prop"
+    ],
+    "msg": "Перката пасва на рамката."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Отворите за моторите съвпадат (12x12 M2)."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "stack"
+    ],
+    "msg": "Стекът 20×20 mm пасва."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "motor",
+     "battery"
+    ],
+    "msg": "2450KV и 6S са добра комбинация."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "stack",
+     "motor"
+    ],
+    "msg": "ESC-то (35A) издържа на моторите."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "vtx",
+     "goggles"
+    ],
+    "msg": "Очилата приемат DJI O4."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 252,
+   "auw_g": 392,
+   "thrust_g": 3000,
+   "twr": 7.6,
+   "hoverCurrent_a": 5.7,
+   "hoverMin": 7.1,
+   "aggressiveMin": 2.4,
+   "price_eur": 472,
+   "totalWithGoggles_eur": 922,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Добър за freestyle"
+  }
+ },
+ "broken: 7in prop": {
+  "sel": {
+   "frame": "f-apex5",
+   "motor": "m-2207-1950",
+   "prop": "p-7",
+   "stack": "s-f7-55",
+   "vtx": "v-o4",
+   "goggles": "g-dji3",
+   "rx": "r-elrs",
+   "battery": "b-6s-1300"
+  },
+  "issues": [
+   {
+    "level": "error",
+    "slots": [
+     "frame",
+     "prop"
+    ],
+    "msg": "Перката 7\" не се побира в рамката (макс. 5.1\"). Перките ще удрят рамката."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Отворите за моторите съвпадат (16x16 M3)."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "stack"
+    ],
+    "msg": "Стекът 30.5×30.5 mm пасва."
+   },
+   {
+    "level": "warn",
+    "slots": [
+     "motor",
+     "prop"
+    ],
+    "msg": "2207 моторът е за 5\" перки, а избраната е 7\". Рискуваш прегряване или слаба тяга."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "motor",
+     "battery"
+    ],
+    "msg": "1950KV и 6S са добра комбинация."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "stack",
+     "motor"
+    ],
+    "msg": "ESC-то (55A) издържа на моторите."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "vtx",
+     "goggles"
+    ],
+    "msg": "Очилата приемат DJI O4."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 368,
+   "auw_g": 583,
+   "thrust_g": 6600,
+   "twr": 11.3,
+   "hoverCurrent_a": 4.9,
+   "hoverMin": 12.7,
+   "aggressiveMin": 4.2,
+   "price_eur": 531,
+   "totalWithGoggles_eur": 981,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Състезателен"
+  }
+ },
+ "broken: 4S motor on 6S": {
+  "sel": {
+   "frame": "f-apex5",
+   "motor": "m-2207-2550",
+   "prop": "p-5-hq",
+   "stack": "s-f7-55",
+   "vtx": "v-o4",
+   "goggles": "g-dji3",
+   "rx": "r-elrs",
+   "battery": "b-6s-1300"
+  },
+  "issues": [
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "prop"
+    ],
+    "msg": "Перката пасва на рамката."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Отворите за моторите съвпадат (16x16 M3)."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "stack"
+    ],
+    "msg": "Стекът 30.5×30.5 mm пасва."
+   },
+   {
+    "level": "error",
+    "slots": [
+     "motor",
+     "battery"
+    ],
+    "msg": "2550KV е за 4S, а батерията е 6S. Моторите ще прегреят и може да изгорят."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "stack",
+     "motor"
+    ],
+    "msg": "ESC-то (55A) издържа на моторите."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "vtx",
+     "goggles"
+    ],
+    "msg": "Очилата приемат DJI O4."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 347,
+   "auw_g": 562,
+   "thrust_g": 8060,
+   "twr": 14.3,
+   "hoverCurrent_a": 6,
+   "hoverMin": 10.3,
+   "aggressiveMin": 3.4,
+   "price_eur": 530,
+   "totalWithGoggles_eur": 980,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Състезателен"
+  }
+ },
+ "broken: analog goggles": {
+  "sel": {
+   "frame": "f-apex5",
+   "motor": "m-2207-1950",
+   "prop": "p-5-hq",
+   "stack": "s-f7-55",
+   "vtx": "v-o4",
+   "goggles": "g-skyzone",
+   "rx": "r-elrs",
+   "battery": "b-6s-1300"
+  },
+  "issues": [
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "prop"
+    ],
+    "msg": "Перката пасва на рамката."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Отворите за моторите съвпадат (16x16 M3)."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "stack"
+    ],
+    "msg": "Стекът 30.5×30.5 mm пасва."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "motor",
+     "battery"
+    ],
+    "msg": "1950KV и 6S са добра комбинация."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "stack",
+     "motor"
+    ],
+    "msg": "ESC-то (55A) издържа на моторите."
+   },
+   {
+    "level": "error",
+    "slots": [
+     "vtx",
+     "goggles"
+    ],
+    "msg": "Очилата Skyzone SKY04X Pro не приемат DJI O4 (поддържат Analog)."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 347,
+   "auw_g": 562,
+   "thrust_g": 6600,
+   "twr": 11.7,
+   "hoverCurrent_a": 6,
+   "hoverMin": 10.3,
+   "aggressiveMin": 3.4,
+   "price_eur": 530,
+   "totalWithGoggles_eur": 1010,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Състезателен"
+  }
+ },
+ "broken: AIO stack": {
+  "sel": {
+   "frame": "f-apex5",
+   "motor": "m-2207-1950",
+   "prop": "p-5-hq",
+   "stack": "s-25-aio",
+   "vtx": "v-o4",
+   "goggles": "g-dji3",
+   "rx": "r-elrs",
+   "battery": "b-6s-1300"
+  },
+  "issues": [
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "prop"
+    ],
+    "msg": "Перката пасва на рамката."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Отворите за моторите съвпадат (16x16 M3)."
+   },
+   {
+    "level": "error",
+    "slots": [
+     "frame",
+     "stack"
+    ],
+    "msg": "Стекът е 25.5×25.5 mm, а рамката приема 30.5×30.5 / 20×20."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "motor",
+     "battery"
+    ],
+    "msg": "1950KV и 6S са добра комбинация."
+   },
+   {
+    "level": "error",
+    "slots": [
+     "stack",
+     "battery"
+    ],
+    "msg": "ESC-то поддържа 2–4S, а батерията е 6S. Ще изгори."
+   },
+   {
+    "level": "error",
+    "slots": [
+     "stack",
+     "motor"
+    ],
+    "msg": "ESC-то е 20A на канал, а моторът тегли до 45A. Твърде слабо."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "vtx",
+     "goggles"
+    ],
+    "msg": "Очилата приемат DJI O4."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 325,
+   "auw_g": 540,
+   "thrust_g": 6600,
+   "twr": 12.2,
+   "hoverCurrent_a": 5.8,
+   "hoverMin": 10.7,
+   "aggressiveMin": 3.6,
+   "price_eur": 505,
+   "totalWithGoggles_eur": 955,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Състезателен"
+  }
+ },
+ "broken: 7in mounts": {
+  "sel": {
+   "frame": "f-mark4-7",
+   "motor": "m-1404-3800",
+   "prop": "p-7",
+   "stack": "s-20-45",
+   "vtx": "v-walksnail",
+   "goggles": "g-walksnail",
+   "rx": "r-elrs900",
+   "battery": "b-6s-li-ion"
+  },
+  "issues": [
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "prop"
+    ],
+    "msg": "Перката пасва на рамката."
+   },
+   {
+    "level": "error",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Моторът е с отвори 9x9 M2, а рамката приема 16x16 M3 / 19x19 M3."
+   },
+   {
+    "level": "error",
+    "slots": [
+     "frame",
+     "stack"
+    ],
+    "msg": "Стекът е 20×20 mm, а рамката приема 30.5×30.5."
+   },
+   {
+    "level": "warn",
+    "slots": [
+     "motor",
+     "prop"
+    ],
+    "msg": "1404 моторът е за 3\" перки, а избраната е 7\". Рискуваш прегряване или слаба тяга."
+   },
+   {
+    "level": "error",
+    "slots": [
+     "motor",
+     "battery"
+    ],
+    "msg": "3800KV е за 4S, а батерията е 6S. Моторите ще прегреят и може да изгорят."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "stack",
+     "motor"
+    ],
+    "msg": "ESC-то (35A) издържа на моторите."
+   },
+   {
+    "level": "ok",
+    "slots": [
+     "vtx",
+     "goggles"
+    ],
+    "msg": "Очилата приемат Walksnail."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 329,
+   "auw_g": 889,
+   "thrust_g": 2080,
+   "twr": 2.3,
+   "hoverCurrent_a": 7.3,
+   "hoverMin": 54.9,
+   "aggressiveMin": 18.3,
+   "price_eur": 401,
+   "totalWithGoggles_eur": 801,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Спокоен/кино/LR"
+  }
+ },
+ "partial": {
+  "sel": {
+   "frame": "f-apex5",
+   "motor": "m-2207-1950"
+  },
+  "issues": [
+   {
+    "level": "ok",
+    "slots": [
+     "frame",
+     "motor"
+    ],
+    "msg": "Отворите за моторите съвпадат (16x16 M3)."
+   }
+  ],
+  "estimate": {
+   "dryWeight_g": 266,
+   "auw_g": 266,
+   "thrust_g": 6600,
+   "twr": 24.8,
+   "hoverCurrent_a": null,
+   "hoverMin": null,
+   "aggressiveMin": null,
+   "price_eur": 179,
+   "totalWithGoggles_eur": 179,
+   "easa": "A3: самосглобен дрон без C клас. Далеч от хора и населени места, нужен е онлайн изпит A1/A3",
+   "twrVerdict": "Състезателен"
+  }
+ }
+}

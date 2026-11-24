@@ -315,7 +315,7 @@ class ScannerService : Service() {
             this, 1, Intent(this, ScannerService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_drone)
             .setContentTitle(getString(R.string.notif_title))
             .setContentIntent(open)
             .setOngoing(true)

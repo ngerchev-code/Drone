@@ -72,6 +72,7 @@ fun NewsScreen(vm: RadarViewModel, bottomPadding: Int) {
     val st by vm.news.collectAsStateWithLifecycle()
     var cat by rememberSaveable { mutableStateOf<NewsCategory?>(null) }
     val uri = LocalUriHandler.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(Unit) { vm.loadNews() }
     val list = st.items.filter { cat == null || it.category == cat }
 
@@ -116,6 +117,7 @@ fun NewsScreen(vm: RadarViewModel, bottomPadding: Int) {
                             Row {
                                 TextButton(onClick = { uri.openUri(n.link) }) { Text("Прочети") }
                                 TextButton(onClick = { uri.openUri(n.translateUrl) }) { Text("Преведи на БГ") }
+                                TextButton(onClick = { bg.drone.receiver.Share.news(context, n) }) { Text("Сподели") }
                             }
                         }
                     }
