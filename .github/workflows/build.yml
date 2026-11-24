@@ -96,3 +96,28 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash android/ci/ui-smoke.sh apk/app-debug.apk
+
+  release:
+    name: Публикуване на APK (Releases)
+    needs: [android, android-ui]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: droneradar-receiver-debug
+          path: apk
+      - run: mv apk/app-debug.apk apk/DroneRadar.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: droneradar-v0.3.${{ github.run_number }}
+          name: DroneRadar 0.3 (сглобяване ${{ github.run_number }})
+          target_commitish: ${{ github.sha }}
+          make_latest: 'true'
+          files: apk/DroneRadar.apk
+          body: |
+            Android приложение DroneRadar: жива карта на безпилотните апарати.
+            Инсталиране: свали DroneRadar.apk на телефона (Android 8.0+) и го отвори.
+            Прототип, подписан с тестов (debug) ключ. Проверен в емулатор (Android 13).
