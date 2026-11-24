@@ -263,7 +263,7 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int) {
         Group("Данни и лицензи") {
             Feeds.ADSB_PROVIDERS.forEach { KeyValue(it.name, it.licence) }
             KeyValue("SondeHub", "CC BY-SA")
-            KeyValue("Карта", "© OpenStreetMap, © CARTO")
+            KeyValue("Карта", "OpenFreeMap · © OpenMapTiles · © OpenStreetMap")
             KeyValue("Новини", bg.drone.rid.News.SOURCES.joinToString(", ") { it.name })
             KeyValue("Версия", "0.3.0")
         }

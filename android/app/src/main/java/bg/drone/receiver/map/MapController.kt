@@ -68,10 +68,13 @@ class MapController(private val context: Context) {
                 setRotateGesturesEnabled(true)
             }
             m.cameraPosition = CameraPosition.Builder().target(LatLng(42.7, 25.3)).zoom(6.3).build()
-            m.setStyle(Style.Builder().fromJson(STYLE_JSON)) { s ->
-                style = s
-                setupLayers(s)
-                pending?.let { render(it) }
+            loadStyle(m, Style.Builder().fromUri(STYLE_URL))
+            // без интернет или при недостъпен OpenFreeMap → резервна растерна карта (OSM)
+            mapView.addOnDidFailLoadingMapListener {
+                if (!usingFallback) {
+                    usingFallback = true
+                    loadStyle(m, Style.Builder().fromJson(FALLBACK_STYLE_JSON))
+                }
             }
             m.addOnMapClickListener { latLng ->
                 val pt: PointF = m.projection.toScreenLocation(latLng)
@@ -84,6 +87,17 @@ class MapController(private val context: Context) {
                 val t = m.cameraPosition.target ?: return@addOnCameraIdleListener
                 onCameraIdle(t.latitude, t.longitude)
             }
+        }
+    }
+
+    private var usingFallback = false
+
+    private fun loadStyle(m: MapLibreMap, builder: Style.Builder) {
+        style = null
+        m.setStyle(builder) { s ->
+            style = s
+            setupLayers(s)
+            pending?.let { render(it) }
         }
     }
 
@@ -209,16 +223,17 @@ class MapController(private val context: Context) {
         const val LAYER_TARGETS = "targets-layer"
         private const val LAYER_TRAILS = "trails-layer"
 
-        // Тъмна растерна карта (CARTO Dark Matter, данни © OpenStreetMap).
-        private val STYLE_JSON = """
-            {"version":8,"name":"DroneRadar Dark",
-             "sources":{"carto":{"type":"raster","tileSize":256,"maxzoom":19,
-               "attribution":"© OpenStreetMap contributors © CARTO",
-               "tiles":["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
-                        "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
-                        "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png"]}},
+        // Тъмна векторна карта: OpenFreeMap (безплатна, без ключ, данни © OpenStreetMap / OpenMapTiles).
+        private const val STYLE_URL = "https://tiles.openfreemap.org/styles/dark"
+
+        // Резервна растерна карта, ако векторният стил не се зареди.
+        private val FALLBACK_STYLE_JSON = """
+            {"version":8,"name":"DroneRadar Fallback",
+             "sources":{"osm":{"type":"raster","tileSize":256,"maxzoom":19,
+               "attribution":"© OpenStreetMap contributors",
+               "tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"]}},
              "layers":[{"id":"bg","type":"background","paint":{"background-color":"#0B0F14"}},
-                       {"id":"carto","type":"raster","source":"carto"}]}
+                       {"id":"osm","type":"raster","source":"osm","paint":{"raster-saturation":-0.8,"raster-brightness-max":0.45,"raster-contrast":0.2}}]}
         """.trimIndent()
     }
 }
