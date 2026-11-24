@@ -61,8 +61,14 @@ export async function createServer({ simulate = false, ingestToken = process.env
         if (ingestToken && req.headers.authorization !== `Bearer ${ingestToken}`) return json(res, 401, { error: 'unauthorized' });
         const body = JSON.parse(await readBody(req));
         const items = Array.isArray(body) ? body : [body];
-        for (const item of items) store.ingest(item);
-        return json(res, 202, { accepted: items.length });
+        // всеки кадър поотделно: един повреден кадър не бива да проваля цялата партида от приемника
+        const errors = [];
+        for (const [i, item] of items.entries()) {
+          try { store.ingest(item); } catch (e) { errors.push({ index: i, error: e.message }); }
+        }
+        const accepted = items.length - errors.length;
+        if (!Array.isArray(body) && errors.length) return json(res, 400, { error: errors[0].error });
+        return json(res, 202, { accepted, rejected: errors.length, errors: errors.slice(0, 10) });
       }
       if (req.method === 'GET' && url.pathname === '/api/drones') return json(res, 200, store.snapshot());
       if (req.method === 'GET' && url.pathname === '/api/stats') return json(res, 200, store.stats());

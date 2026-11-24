@@ -32,4 +32,4 @@ npm test
 ## Важно
 - `data/geozones-bg.geojson` съдържа **примерни, опростени** зони (летища, АЕЦ Козлодуй, център на София).
   Не са официални. Следващата стъпка е импорт на официалните геозони (ED-269 формат) от ГВА/ДП РВД.
-- Следващата стъпка за приемниците: [`docs/ANDROID-RECEIVER.md`](docs/ANDROID-RECEIVER.md).
+- Android приемникът е в [`../android/`](../android/). Бележките за протокола са в [`docs/ANDROID-RECEIVER.md`](docs/ANDROID-RECEIVER.md).

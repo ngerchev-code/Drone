@@ -67,6 +67,12 @@ test('HTTP API: ingest → drones → check', async () => {
     const chk = await (await fetch(`${base}/api/check?lat=43.2321&lon=27.8251`)).json();
     assert.equal(chk.verdict, 'prohibited');
     assert.equal((await fetch(`${base}/api/ingest`, { method: 'POST', body: '{"source":"x"}' })).status, 400);
+    // партида с един повреден кадър: останалите се приемат
+    const mixed = await fetch(`${base}/api/ingest`, { method: 'POST', body: JSON.stringify([{ source: 'x2', payload }, { source: 'x3', payload: 'ff' }]) });
+    assert.equal(mixed.status, 202);
+    const mixedBody = await mixed.json();
+    assert.equal(mixedBody.accepted, 1);
+    assert.equal(mixedBody.rejected, 1);
     // fetch нормализира „../“, затова пращаме суров път през node:http
     const rawStatus = await new Promise((resolve) => {
       http.get({ port: server.address().port, path: '/shared/../server/server.js' }, (res) => { res.resume(); resolve(res.statusCode); });

@@ -1,0 +1,47 @@
+name: Build
+
+on:
+  push:
+    paths: ['android/**', 'tracker/**', 'encyclopedia/**', '.github/workflows/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Node тестове (tracker + encyclopedia)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+        working-directory: tracker
+      - run: npm test
+        working-directory: encyclopedia
+
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: core тестове (Remote ID декодер, парсери, batcher)
+        run: ./gradlew -p core test --console=plain
+      - name: Сглобяване на APK
+        run: ./gradlew :app:assembleDebug --console=plain --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: droneradar-receiver-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
