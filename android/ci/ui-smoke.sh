@@ -9,7 +9,7 @@ mkdir -p "$OUT"
 
 shot() { # shot <име>
   adb exec-out screencap -p > "$OUT/$1.png"
-  ffmpeg -loglevel error -y -i "$OUT/$1.png" -vf scale=300:-1 -q:v 9 "$OUT/$1.jpg"
+  python3 -c "from PIL import Image; im=Image.open('$OUT/$1.png').convert('RGB'); im.thumbnail((320,720)); im.save('$OUT/$1.jpg', quality=55)"
   echo "=====SCREENSHOT $1 BEGIN====="
   base64 -w 0 "$OUT/$1.jpg"; echo
   echo "=====SCREENSHOT $1 END====="
