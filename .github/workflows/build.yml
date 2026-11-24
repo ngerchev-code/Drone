@@ -22,35 +22,6 @@ jobs:
         working-directory: tracker
       - run: npm test
         working-directory: encyclopedia
-      - name: NASA GIBS и български RSS (диагностика)
-        continue-on-error: true
-        run: |
-          for d in $(date -u -d yesterday +%F) $(date -u -d '2 days ago' +%F); do
-            for l in VIIRS_NOAA20_CorrectedReflectance_TrueColor VIIRS_NOAA21_CorrectedReflectance_TrueColor VIIRS_SNPP_CorrectedReflectance_TrueColor MODIS_Aqua_CorrectedReflectance_TrueColor MODIS_Terra_CorrectedReflectance_TrueColor; do
-              printf '%s %s -> ' "$d" "$l"; curl -s -o /dev/null -w '%{http_code} %{size_download}\n' "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/$l/default/$d/GoogleMapsCompatible_Level9/6/22/36.jpg"
-            done
-          done
-          for u in https://www.dnevnik.bg/rss/ https://www.mediapool.bg/rss.xml https://offnews.bg/rss/all https://www.capital.bg/rss/ https://btvnovinite.bg/rss https://bntnews.bg/bg/rss https://www.24chasa.bg/rss https://www.novinite.com/services/news_rdf.php https://www.segabg.com/rss.xml https://defence-industry.eu/feed/ https://bulgarianmilitary.com/feed/ https://www.bta.bg/bg/rss; do
-            printf '%s -> ' "$u"; curl -sL -o /tmp/f -w '%{http_code} %{content_type} %{size_download} ' -A 'Mozilla/5.0 (Android 14) DroneRadar' "$u"; grep -a -o -c '<item' /tmp/f || true
-          done
-      - name: Картни източници без ключ (диагностика)
-        continue-on-error: true
-        run: |
-          for u in \
-            https://tiles.openfreemap.org/styles/dark \
-            https://tiles.openfreemap.org/styles/positron \
-            https://tiles.openfreemap.org/styles/liberty \
-            https://tiles.openfreemap.org/styles/fiord \
-            https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/3/2/4 \
-            https://tile.openstreetmap.org/3/4/2.png \
-            https://basemaps.cartocdn.com/dark_all/3/4/2.png \
-            https://demotiles.maplibre.org/style.json \
-            https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/g/6/22/36.jpg \
-            "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/$(date -u -d yesterday +%F)/GoogleMapsCompatible_Level9/6/22/36.jpg" \
-            "https://news.google.com/rss/search?q=%D0%B4%D1%80%D0%BE%D0%BD%D0%BE%D0%B2%D0%B5&hl=bg&gl=BG&ceid=BG:bg"; do
-            printf '%s -> ' "$u"; curl -s -o /tmp/t -w '%{http_code} %{content_type} %{size_download}\n' -A 'DroneRadar-CI' "$u"
-            head -c 160 /tmp/t | tr -d '\n' | grep -a -o '"name":"[^"]*"' || true
-          done
 
   android:
     name: Android APK

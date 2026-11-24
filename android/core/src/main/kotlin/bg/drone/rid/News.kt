@@ -45,6 +45,9 @@ object News {
         RegexOption.IGNORE_CASE,
     )
 
+    /** Статии на български за дронове (Unicode флагове: кирилица и \\b работят правилно). */
+    val BG_DRONE_WORDS = Regex("""(?iuU)(дрон|безпилот|квадрокоптер|\bБЛА\b|\bБЛС\b)""")
+
     /** Google News търсене на български (RSS, без ключ). */
     fun googleNewsBg(query: String): String =
         "https://news.google.com/rss/search?q=" + URLEncoder.encode("$query when:30d", "UTF-8") + "&hl=bg&gl=BG&ceid=BG:bg"
@@ -53,6 +56,11 @@ object News {
         NewsSource("Дронове · България", googleNewsBg("дрон OR дронове OR безпилотни OR безпилотен"), NewsCategory.BULGARIA),
         NewsSource("Фирми и софтуер · БГ", googleNewsBg("(дрон OR дронове OR БЛА) (фирма OR компания OR стартъп OR софтуер OR завод OR производство) България"), NewsCategory.BULGARIA),
         NewsSource("Отбрана · БГ", googleNewsBg("(дронове OR БЛА OR безпилотни OR \"морски дрон\") (армия OR отбрана OR ВМС OR МО OR НАТО) България"), NewsCategory.BULGARIA),
+        // преки канали на български медии (резерва, ако Google News временно откаже)
+        NewsSource("Дневник", "https://www.dnevnik.bg/rss/", NewsCategory.BULGARIA, BG_DRONE_WORDS),
+        NewsSource("24 Часа", "https://www.24chasa.bg/rss", NewsCategory.BULGARIA, BG_DRONE_WORDS),
+        NewsSource("Novinite", "https://www.novinite.com/services/news_rdf.php", NewsCategory.BULGARIA, DRONE_WORDS),
+        NewsSource("Defence Industry Europe", "https://defence-industry.eu/feed/", NewsCategory.MILITARY, DRONE_WORDS),
         NewsSource("Събития · БГ", googleNewsBg("(дрон OR дронове OR БЛА) (семинар OR конференция OR изложение OR обучение OR курс OR хакатон OR форум OR среща)"), NewsCategory.EVENTS),
         NewsSource("DroneDJ", "https://dronedj.com/feed/", NewsCategory.CIVIL),
         NewsSource("DroneXL", "https://dronexl.co/feed/", NewsCategory.CIVIL),

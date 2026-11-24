@@ -120,6 +120,16 @@ class NewsTest {
     }
 
     @Test
+    fun bulgarianKeywordFilter() {
+        val r = News.BG_DRONE_WORDS
+        assertTrue(r.containsMatchIn("Армията получава нови ДРОНОВЕ"))
+        assertTrue(r.containsMatchIn("Безпилотни летателни апарати над Черно море"))
+        assertTrue(r.containsMatchIn("Доставка на БЛА за флота"))
+        assertTrue(!r.containsMatchIn("Цените на хляба се покачиха"))
+        assertTrue(!r.containsMatchIn("БЛАГОЕВГРАД получи нов парк"), "БЛА само като отделна дума")
+    }
+
+    @Test
     fun quizIsConsistent() {
         assertTrue(Quiz.QUESTIONS.size >= 15)
         for (q in Quiz.QUESTIONS) {

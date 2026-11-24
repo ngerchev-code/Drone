@@ -118,11 +118,11 @@ class MapController(private val context: Context) {
             "Sentinel-2 cloudless 2023 by EOX IT Services GmbH (modified Copernicus Sentinel data)",
         ))
         BaseMap.SATELLITE_TODAY -> {
-            // VIIRS (Suomi NPP) от вчера по UTC: днешната мозайка често още не е готова
+            // VIIRS (NOAA-20) от вчера по UTC: днешната мозайка често още не е готова
             val day = java.time.LocalDate.now(java.time.ZoneOffset.UTC).minusDays(1).toString()
             Style.Builder().fromJson(rasterStyle(
-                "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/$day/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg", 9,
-                "NASA EOSDIS GIBS · VIIRS $day",
+                "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/$day/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg", 9,
+                "NASA EOSDIS GIBS · VIIRS NOAA-20 $day",
             ))
         }
     }
