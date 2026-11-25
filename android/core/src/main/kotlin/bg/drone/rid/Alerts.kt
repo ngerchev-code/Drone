@@ -7,12 +7,15 @@ package bg.drone.rid
  */
 enum class AlertRegion(val label: String, val keywords: List<String>) {
     BLACK_SEA("Черно море", listOf("black sea", "черно море", "черноморск", "odesa", "odessa", "одеса", "crimea", "крим", "sevastopol", "севастопол",
-        "novorossiysk", "новоросийск", "kerch", "керч", "constanta", "constanța", "констанца", "snake island", "змийски", "izmail", "измаил")),
+        "novorossiysk", "новоросийск", "kerch", "керч", "constanta", "constanța", "констанца", "snake island", "змийски", "izmail", "измаил",
+        "tuapse", "туапсе", "mykolaiv", "николаев", "kherson", "херсон", "chornomorsk", "черноморск", "sochi", "сочи", "batumi", "батуми")),
     BULGARIA("България", listOf("bulgaria", "bulgarian", "българ", "varna", "варна", "burgas", "бургас", "sofia", "софия", "шабла", "shabla", "добрич", "dobrich")),
     ROMANIA("Румъния", listOf("romania", "romanian", "румъни", "tulcea", "тулча", "galati", "galați", "галац", "dobruja", "добруджа")),
     MOLDOVA("Молдова", listOf("moldova", "moldovan", "молдов", "chisinau", "chișinău", "кишинев")),
-    UKRAINE("Украйна", listOf("ukraine", "ukrainian", "украйн", "kyiv", "kiev", "киев", "kharkiv", "харков", "dnipro", "днепър", "lviv", "лвов", "zaporizhzhia", "запорож")),
-    RUSSIA("Русия", listOf("russia", "russian", "руси", "moscow", "москва", "belgorod", "белгород", "kursk", "курск", "bryansk", "брянск", "krasnodar", "краснодар")),
+    UKRAINE("Украйна", listOf("ukraine", "ukrainian", "украйн", "kyiv", "kiev", "киев", "kharkiv", "харков", "dnipro", "днепър", "lviv", "лвов", "zaporizhzhia", "запорож",
+        "bila tserkva", "бяла церква", "sumy", "суми", "chernihiv", "чернигов", "poltava", "полтава", "kryvyi rih", "кривой рог", "vinnytsia", "виница")),
+    RUSSIA("Русия", listOf("russia", "russian", "руси", "moscow", "москва", "belgorod", "белгород", "kursk", "курск", "bryansk", "брянск", "krasnodar", "краснодар",
+        "samara", "самар", "rostov", "ростов", "voronezh", "воронеж", "saratov", "саратов", "ryazan", "рязан", "tatarstan", "татарстан")),
     NATO_EUROPE("НАТО / Европа", listOf("nato", "нато", "poland", "полша", "lithuania", "литва", "latvia", "латвия", "estonia", "естония", "germany", "германия", "denmark", "дания", "finland", "финландия")),
 }
 

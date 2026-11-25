@@ -33,6 +33,13 @@ class AlertsTest {
     }
 
     @Test
+    fun moreCities() {
+        assertTrue(AlertRegion.RUSSIA in Alerts.regions("Над 145 дрона са свалени над Самарска област"))
+        assertTrue(AlertRegion.BLACK_SEA in Alerts.regions("Drone attack on Tuapse oil terminal"))
+        assertTrue(AlertRegion.UKRAINE in Alerts.regions("Russian drone strike on Bila Tserkva"))
+    }
+
+    @Test
     fun sourcesAreConfigured() {
         assertTrue(Alerts.SOURCES.all { it.category == NewsCategory.ALERTS })
         assertTrue(Alerts.SOURCES.last().url.contains("when%3A3d"))
