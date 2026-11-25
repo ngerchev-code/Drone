@@ -107,15 +107,18 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
                 Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Dot(if (adsb.ok == true || scan.running) Palette.Ok else Palette.Muted, 9)
                     Spacer(Modifier.width(8.dp))
-                    Text("DroneRadar", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Palette.Text)
-                    Spacer(Modifier.width(8.dp))
-                    Text("LIVE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Palette.Bad,
-                        modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Palette.Bad.copy(alpha = 0.15f)).padding(horizontal = 5.dp, vertical = 1.dp))
-                    Spacer(Modifier.weight(1f))
+                    // името се съкращава на тесни екрани, бутоните вдясно винаги остават видими
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Text("DroneRadar", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Palette.Text, maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                        Spacer(Modifier.width(6.dp))
+                        Text("LIVE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Palette.Bad, maxLines = 1, softWrap = false,
+                            modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Palette.Bad.copy(alpha = 0.15f)).padding(horizontal = 5.dp, vertical = 1.dp))
+                    }
                     RegionMenu(me, controller.baseMap, onBase = { b -> controller.setBaseMap(b); vm.settings.baseMap = b.name }) { lat, lon, zoom -> controller.flyTo(lat, lon, zoom) }
                     // броят обекти отваря списъка (като във Flightradar24)
                     Text(
-                        "☰ ${visible.size}", color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                        "☰ ${visible.size}", color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false,
                         modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onList).padding(horizontal = 6.dp, vertical = 4.dp),
                     )
                     IconButton(onClick = onSettings) { Icon(androidx.compose.material.icons.Icons.Filled.Settings, contentDescription = "Опции", tint = Palette.Muted) }
@@ -192,7 +195,9 @@ private val REGIONS = listOf(
 private fun RegionMenu(me: Pair<Double, Double>?, base: MapController.BaseMap, onBase: (MapController.BaseMap) -> Unit, onGo: (Double, Double, Double) -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
-        TextButton(onClick = { open = true }) { Text("Изглед ▾", fontSize = 13.sp) }
+        TextButton(onClick = { open = true }, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp)) {
+            Text("Изглед ▾", fontSize = 13.sp, maxLines = 1, softWrap = false)
+        }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             if (me != null) {
                 DropdownMenuItem(text = { Text("Около мен") }, onClick = { open = false; onGo(me.first, me.second, 11.0) })
