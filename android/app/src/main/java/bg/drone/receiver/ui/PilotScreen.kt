@@ -78,16 +78,15 @@ fun PilotScreen(vm: RadarViewModel, bottomPadding: Int, onShowTrack: () -> Unit)
             Text("Пилот", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Palette.Text)
         }
         ScrollableTabRow(selectedTabIndex = sub, containerColor = Palette.Bg, contentColor = Palette.Accent, edgePadding = 8.dp) {
-            listOf("Време", "Охрана", "История", "Видео стрийм", "Полетни логове", "FPV сглобяване").forEachIndexed { i, t ->
+            listOf("Охрана", "История", "Видео стрийм", "Полетни логове", "FPV сглобяване").forEachIndexed { i, t ->
                 Tab(selected = sub == i, onClick = { sub = i }, text = { Text(t) })
             }
         }
         when (sub) {
-            0 -> WeatherView(vm, bottomPadding)
-            1 -> GuardView(vm, bottomPadding)
-            2 -> HistoryView(vm, bottomPadding)
-            3 -> VideoView(vm, bottomPadding)
-            4 -> LogsView(vm, bottomPadding, onShowTrack)
+            0 -> GuardView(vm, bottomPadding)
+            1 -> HistoryView(vm, bottomPadding)
+            2 -> VideoView(vm, bottomPadding)
+            3 -> LogsView(vm, bottomPadding, onShowTrack)
             else -> FpvView(vm, bottomPadding)
         }
     }

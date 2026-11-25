@@ -63,6 +63,16 @@ enum class Filter(val label: String, val kinds: Set<TargetKind>) {
     SONDES("Сонди", setOf(TargetKind.RADIOSONDE)),
 }
 
+private data class WxBundle(
+    val hours: List<bg.drone.rid.WeatherHour>,
+    val kp: Double?,
+    val metars: List<bg.drone.rid.Metar>,
+    val tafs: Map<String, bg.drone.rid.Taf>,
+    val pro: bg.drone.rid.ProForecast?,
+    val models: List<bg.drone.rid.ModelRun>,
+    val sigmets: List<bg.drone.rid.Sigmet>,
+)
+
 class RadarViewModel(app: Application) : AndroidViewModel(app) {
     val settings = Settings(app)
     private val store = TargetStore()
@@ -121,6 +131,9 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
         val placeName: String? = null,
         val metars: List<bg.drone.rid.Metar> = emptyList(),
         val tafs: Map<String, bg.drone.rid.Taf> = emptyMap(),
+        val pro: bg.drone.rid.ProForecast? = null,
+        val models: List<bg.drone.rid.ModelRun> = emptyList(),
+        val sigmets: List<bg.drone.rid.Sigmet> = emptyList(),
     ) {
         val nearestMetar: bg.drone.rid.Metar? get() = metars.firstOrNull()
     }
@@ -169,7 +182,12 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val r = withContext(Dispatchers.IO) {
                 runCatching {
-                    val hours = PilotWeather.parseForecast(Feeds.httpGet(PilotWeather.forecastUrl(place.first, place.second), 15_000))
+                    // подробната прогноза (барични нива, CAPE, нулева изотерма…); при проблем → основната
+                    val pro = runCatching {
+                        bg.drone.rid.ProWeather.parse(Feeds.httpGet(bg.drone.rid.ProWeather.forecastUrl(place.first, place.second), 20_000))
+                    }.getOrNull()?.takeIf { it.hours.isNotEmpty() }
+                    val hours = pro?.hours?.map { it.toWeatherHour() }
+                        ?: PilotWeather.parseForecast(Feeds.httpGet(PilotWeather.forecastUrl(place.first, place.second), 15_000))
                     val kp = runCatching { PilotWeather.parseKp(Feeds.httpGet(PilotWeather.KP_URL, 10_000)) }.getOrNull()
                     // официалното авиационно време от летищата наоколо (METAR) + прогнозите им (TAF)
                     val metars = runCatching {
@@ -178,15 +196,21 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
                     val tafs = if (metars.isEmpty()) emptyMap() else runCatching {
                         bg.drone.rid.AviationWeather.parseTafs(Feeds.httpGet(bg.drone.rid.AviationWeather.tafUrl(metars.take(8).map { it.icao }), 15_000)).associateBy { it.icao }
                     }.getOrDefault(emptyMap())
-                    Triple(hours, kp, metars to tafs)
+                    val models = runCatching { bg.drone.rid.ProWeather.parseModels(Feeds.httpGet(bg.drone.rid.ProWeather.modelsUrl(place.first, place.second), 20_000)) }.getOrDefault(emptyList())
+                    val sigmets = runCatching {
+                        bg.drone.rid.ProWeather.nearby(bg.drone.rid.ProWeather.parseSigmets(Feeds.httpGet(bg.drone.rid.ProWeather.SIGMET_URL, 20_000)), place.first, place.second)
+                    }.getOrDefault(emptyList())
+                    WxBundle(hours, kp, metars, tafs, pro, models, sigmets)
                 }
             }
-            r.onSuccess { (hours, kp, met) ->
+            r.onSuccess { b ->
                 val now = System.currentTimeMillis() - 3_600_000
                 weather.value = WeatherState(
-                    hours = hours.filter { it.timeMs >= now }.take(36).map { PilotWeather.verdict(it, profile.value, kp) },
-                    kp = kp, updatedMs = System.currentTimeMillis(), place = place, placeName = chosen?.label,
-                    metars = met.first, tafs = met.second,
+                    hours = b.hours.filter { it.timeMs >= now }.take(48).map { PilotWeather.verdict(it, profile.value, b.kp) },
+                    kp = b.kp, updatedMs = System.currentTimeMillis(), place = place, placeName = chosen?.label,
+                    metars = b.metars, tafs = b.tafs,
+                    pro = b.pro?.let { it.copy(hours = it.hours.filter { h -> h.timeMs >= now }.take(48)) },
+                    models = b.models, sigmets = b.sigmets,
                 )
             }.onFailure { e -> weather.value = st.copy(loading = false, error = "Няма връзка с прогнозата: ${e.message ?: e.javaClass.simpleName}") }
         }

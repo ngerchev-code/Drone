@@ -49,9 +49,10 @@ import bg.drone.receiver.ui.MapScreen
 import bg.drone.receiver.ui.Palette
 import bg.drone.receiver.ui.SettingsScreen
 
-private enum class Tab(val label: String, val icon: ImageVector) {
+private enum class Tab(val label: String, val icon: ImageVector?) {
     MAP("Карта", Icons.Filled.Place),
-    LIST("Списък", Icons.AutoMirrored.Filled.List),
+    LIST("Списък", Icons.AutoMirrored.Filled.List), // отваря се от бутона на картата
+    WEATHER("Време", null), // иконата е собствен векторен ресурс
     PILOT("Пилот", Icons.Filled.Star),
     NEWS("Новини", Icons.Filled.Notifications),
     WIKI("Знания", Icons.Filled.Info),
@@ -141,21 +142,25 @@ private fun RadarApp(vm: RadarViewModel, pendingSelect: androidx.compose.runtime
     val navHeight = 80 + navInset.value.toInt()
     Box(Modifier.fillMaxSize()) {
         // Картата остава винаги заредена; другите екрани се рисуват върху нея.
-        MapScreen(vm, controller, toggleScan, bottomPadding = navHeight, onSettings = { tab = Tab.SETTINGS }, onWeather = { tab = Tab.PILOT })
+        MapScreen(vm, controller, toggleScan, bottomPadding = navHeight, onSettings = { tab = Tab.SETTINGS }, onList = { tab = Tab.LIST })
         when (tab) {
             Tab.MAP -> Unit
             Tab.LIST -> ListScreen(vm, navHeight, ::open)
+            Tab.WEATHER -> bg.drone.receiver.ui.WeatherScreen(vm, navHeight)
             Tab.PILOT -> PilotScreen(vm, navHeight) { tab = Tab.MAP }
             Tab.NEWS -> NewsScreen(vm, navHeight)
             Tab.WIKI -> KnowledgeScreen(vm, navHeight)
             Tab.SETTINGS -> SettingsScreen(vm, navHeight, controller)
         }
         NavigationBar(containerColor = Palette.Surface, modifier = Modifier.align(Alignment.BottomCenter)) {
-            Tab.entries.filter { it != Tab.SETTINGS }.forEach { t ->
+            Tab.entries.filter { it != Tab.SETTINGS && it != Tab.LIST }.forEach { t ->
                 NavigationBarItem(
                     selected = tab == t,
                     onClick = { tab = t },
-                    icon = { Icon(t.icon, contentDescription = t.label) },
+                    icon = {
+                        if (t.icon != null) Icon(t.icon, contentDescription = t.label)
+                        else Icon(androidx.compose.ui.res.painterResource(R.drawable.ic_weather), contentDescription = t.label)
+                    },
                     label = { Text(t.label, maxLines = 1, softWrap = false, fontSize = 11.sp) },
                     colors = NavigationBarItemDefaults.colors(indicatorColor = Palette.Accent.copy(alpha = 0.2f)),
                 )

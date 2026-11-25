@@ -28,6 +28,7 @@ data class Metar(
     val clouds: List<CloudLayer>,
     val flightCategory: String?, // VFR / MVFR / IFR / LIFR
     val raw: String,
+    val skyCover: String? = null, // общо покритие: SKC, CAVOK, FEW…
 ) {
     val ceilingFt: Int? get() = clouds.filter { it.cover in setOf("BKN", "OVC", "OVX", "VV") }.mapNotNull { it.baseFt }.minOrNull()
 }
@@ -85,6 +86,7 @@ object AviationWeather {
                 }.orEmpty(),
                 flightCategory = o.str("fltCat"),
                 raw = o.str("rawOb") ?: "",
+                skyCover = o.str("cover"),
             )
         }
     }
@@ -164,7 +166,8 @@ object AviationWeather {
         },
         m.visibilityM?.let { if (m.visibilityPlus || it >= 9999) "видимост 10+ km" else "видимост %.1f km".format(Locale.ROOT, it / 1000) },
         weatherText(m.weather),
-        m.ceilingFt?.let { "таван ${(it * 0.3048).toInt()} m" } ?: m.clouds.firstOrNull()?.let { coverText(it.cover) + (it.baseFt?.let { b -> " на ${(b * 0.3048).toInt()} m" } ?: "") },
+        m.ceilingFt?.let { "таван ${(it * 0.3048).toInt()} m" } ?: m.clouds.firstOrNull()?.let { coverText(it.cover) + (it.baseFt?.let { b -> " на ${(b * 0.3048).toInt()} m" } ?: "") }
+            ?: m.skyCover?.takeIf { it in setOf("SKC", "CLR", "CAVOK", "NSC", "NCD") }?.let { if (it == "CAVOK") "CAVOK (ясно, видимост над 10 km)" else "ясно" },
         m.tempC?.let { "%.0f°C".format(Locale.ROOT, it) },
         m.qnhHpa?.let { "QNH %.0f".format(Locale.ROOT, it) },
     ).joinToString(" · ")

@@ -27,6 +27,8 @@ class MetarTest {
         assertEquals(805.0, pg.visibilityM!!, 1.0)
         assertTrue(AviationWeather.summary(pg).startsWith("променлив 2 kt"))
         assertEquals("мъгла", AviationWeather.weatherText("FG"))
+        val clear = AviationWeather.parseMetars("""[{"icaoId":"LBIA","lat":42.4,"lon":26.3,"wdir":60,"wspd":4,"visib":"6+","temp":-3.8,"altim":1028,"cover":"SKC","clouds":[],"rawOb":"x"}]""").single()
+        assertTrue(AviationWeather.summary(clear).contains("ясно"))
         assertEquals("силна гръмотевична буря с дъжд, сумрачност (мъгла)", AviationWeather.weatherText("+TSRA BR"))
         assertEquals("слаб сняг", AviationWeather.weatherText("-SN"))
         assertEquals("LIFR: много лоши условия", AviationWeather.categoryText("LIFR"))

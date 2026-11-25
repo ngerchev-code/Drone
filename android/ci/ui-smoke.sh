@@ -61,7 +61,7 @@ sleep 6
 shot selected
 texts selected
 
-tap_text "Списък"; sleep 4
+tap_text "Време"; sleep 15
 shot list
 texts list
 

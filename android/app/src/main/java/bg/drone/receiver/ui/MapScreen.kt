@@ -73,7 +73,7 @@ import bg.drone.rid.Target
 import org.maplibre.android.maps.MapView
 
 @Composable
-fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () -> Unit, bottomPadding: Int, onSettings: () -> Unit = {}, onWeather: () -> Unit = {}) {
+fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () -> Unit, bottomPadding: Int, onSettings: () -> Unit = {}, onList: () -> Unit = {}) {
     val all by vm.targets.collectAsStateWithLifecycle()
     val filter by vm.filter.collectAsStateWithLifecycle()
     val selectedId by vm.selectedId.collectAsStateWithLifecycle()
@@ -113,7 +113,11 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
                         modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Palette.Bad.copy(alpha = 0.15f)).padding(horizontal = 5.dp, vertical = 1.dp))
                     Spacer(Modifier.weight(1f))
                     RegionMenu(me, controller.baseMap, onBase = { b -> controller.setBaseMap(b); vm.settings.baseMap = b.name }) { lat, lon, zoom -> controller.flyTo(lat, lon, zoom) }
-                    Text("${visible.size}", color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    // броят обекти отваря списъка (като във Flightradar24)
+                    Text(
+                        "☰ ${visible.size}", color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onList).padding(horizontal = 6.dp, vertical = 4.dp),
+                    )
                     IconButton(onClick = onSettings) { Icon(androidx.compose.material.icons.Icons.Filled.Settings, contentDescription = "Опции", tint = Palette.Muted) }
                 }
             }
@@ -136,8 +140,6 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
             }
             Spacer(Modifier.height(4.dp))
             FeedLine(adsb, sondes, network, receiver, scan.running, scan.demo)
-            Spacer(Modifier.height(6.dp))
-            MapWeatherChip(vm, onWeather)
         }
 
         // ---------- бутони вдясно ----------
@@ -244,12 +246,13 @@ private fun FeedLine(adsb: FeedState, sondes: FeedState, network: FeedState, rec
         Row(verticalAlignment = Alignment.CenterVertically) {
             Dot(c, 6)
             Spacer(Modifier.width(4.dp))
-            Text("$label ${if (st.ok == true) st.count else if (st.ok == false) "грешка" else "…"}", fontSize = 11.sp, color = Palette.Muted)
+            Text("$label ${if (st.ok == true) st.count else if (st.ok == false) "✗" else "…"}", fontSize = 11.sp, color = Palette.Muted, maxLines = 1, softWrap = false)
         }
     }
     Row(
-        Modifier.clip(RoundedCornerShape(8.dp)).background(Palette.Bg.copy(alpha = 0.7f)).padding(horizontal = 8.dp, vertical = 4.dp),
+        Modifier.horizontalScroll(rememberScrollState()).clip(RoundedCornerShape(8.dp)).background(Palette.Bg.copy(alpha = 0.7f)).padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         item("ADS-B", adsb)
         item("Сонди", sondes)
@@ -258,7 +261,7 @@ private fun FeedLine(adsb: FeedState, sondes: FeedState, network: FeedState, rec
         Row(verticalAlignment = Alignment.CenterVertically) {
             Dot(if (scanning) Palette.Accent else Palette.Muted, 6)
             Spacer(Modifier.width(4.dp))
-            Text(if (!scanning) "Remote ID изкл." else if (demo) "Remote ID демо" else "Remote ID", fontSize = 11.sp, color = Palette.Muted)
+            Text(if (!scanning) "Remote ID изкл." else if (demo) "Remote ID демо" else "Remote ID", fontSize = 11.sp, color = Palette.Muted, maxLines = 1, softWrap = false)
         }
     }
 }
