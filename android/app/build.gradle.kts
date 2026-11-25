@@ -14,8 +14,8 @@ android {
         applicationId = "bg.drone.receiver"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.8.1"
+        versionCode = 10
+        versionName = "0.8.2"
     }
 
     // Постоянен ключ за разработка: всяко сглобяване в CI се подписва с него, затова новите версии

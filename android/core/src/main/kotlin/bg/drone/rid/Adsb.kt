@@ -30,6 +30,8 @@ data class AdsbAircraft(
     val squawk: String?,
     val seenSec: Double?,
     val seenPosSec: Double?,
+    /** Пълният запис от агрегатора: за детайлния изглед (скорост спрямо въздуха, автопилот, вятър…). */
+    val raw: JsonObject? = null,
 ) {
     val military: Boolean get() = dbFlags and 1 == 1
 }
@@ -72,6 +74,7 @@ object AdsbParser {
             squawk = o.str("squawk"),
             seenSec = o.num("seen"),
             seenPosSec = o.num("seen_pos"),
+            raw = o,
         )
     }
 }
@@ -163,7 +166,12 @@ object UavClassifier {
             source = source,
             kind = kind,
             title = ac.flight ?: ac.registration ?: ac.hex.uppercase(),
-            subtitle = name ?: ac.description ?: ac.typeCode,
+            subtitle = listOfNotNull(
+                name ?: ac.description ?: ac.typeCode,
+                if (kind == TargetKind.MILITARY_UAV) "военен" else null,
+                if (name == null && ac.description == null && reason != null) reason else null,
+                Icao.country(ac.hex),
+            ).distinct().joinToString(" · ").ifBlank { null },
             lat = lat,
             lon = lon,
             altitudeM = if (ac.onGround) 0.0 else alt?.times(0.3048),
@@ -175,17 +183,53 @@ object UavClassifier {
             registration = ac.registration,
             callsign = ac.flight,
             encyclopediaId = encyclopediaId,
-            details = listOfNotNull(
-                "ICAO адрес" to ac.hex.uppercase(),
-                ac.registration?.let { "Регистрация" to it },
-                ac.typeCode?.let { "Типов код" to it },
-                ac.description?.let { "Модел (база данни)" to it },
-                ac.squawk?.let { "Squawk" to it },
-                ac.category?.let { "ADS-B категория" to it },
-                reason?.let { "Разпознат по" to it },
-                ac.altBaroFt?.let { "Барометрична височина" to "${it.toInt()} ft" },
-                if (ac.onGround) "Статус" to "На земята" else null,
-            ),
+            details = adsbDetails(ac, reason),
+        )
+    }
+
+    /** Всичко, което агрегаторът знае за апарата, на човешки език. */
+    fun adsbDetails(ac: AdsbAircraft, reason: String?): List<Pair<String, String>> {
+        val r = ac.raw
+        fun n(k: String) = r?.num(k)
+        fun f(v: Double?, unit: String, d: Int = 0) = v?.let { "%.${d}f %s".format(java.util.Locale.ROOT, it, unit) }
+        val nav = r?.get("nav_modes") as? kotlinx.serialization.json.JsonArray
+        return listOfNotNull(
+            reason?.let { "Разпознат като БЛА по" to it },
+            "ICAO адрес" to ac.hex.uppercase(),
+            Icao.country(ac.hex)?.let { "Държава (по ICAO блок)" to it },
+            ac.registration?.let { "Регистрация / сериен №" to it },
+            ac.typeCode?.let { "Типов код (ICAO)" to it },
+            ac.description?.let { "Модел (база данни)" to it },
+            r?.str("ownOp")?.let { "Оператор" to it },
+            r?.str("year")?.let { "Година на производство" to it },
+            Icao.dbFlags(ac.dbFlags)?.let { "Отбелязан като" to it },
+            Icao.category(ac.category)?.let { "ADS-B категория" to it },
+            Icao.sourceType(r?.str("type"))?.let { "Вид на сигнала" to it },
+            Icao.squawk(ac.squawk)?.let { "Squawk" to it },
+            r?.str("emergency")?.takeIf { it != "none" }?.let { "⚠ Авария" to it },
+            if (ac.onGround) "Статус" to "На земята" else null,
+            ac.altBaroFt?.let { "Барометрична височина" to "${it.toInt()} ft (FL${"%03d".format((it / 100).toInt().coerceAtLeast(0))})" },
+            ac.altGeomFt?.let { "GNSS височина" to "${it.toInt()} ft · ${(it * 0.3048).toInt()} m" },
+            n("nav_altitude_mcp")?.let { "Зададена височина (автопилот)" to "${it.toInt()} ft" },
+            n("nav_heading")?.let { "Зададен курс (автопилот)" to "${it.toInt()}°" },
+            nav?.takeIf { it.isNotEmpty() }?.let { "Режими на автопилота" to it.joinToString(", ") { e -> (e as? JsonPrimitive)?.content ?: "" } },
+            f(n("tas"), "kt")?.let { "Истинска въздушна скорост" to it },
+            f(n("ias"), "kt")?.let { "Уредна скорост" to it },
+            f(n("mach"), "", 3)?.let { "Число на Мах" to it.trim() },
+            n("true_heading")?.let { "Курс на носа (истински)" to "${it.toInt()}°" },
+            n("mag_heading")?.let { "Курс на носа (магнитен)" to "${it.toInt()}°" },
+            f(n("roll"), "°", 1)?.let { "Наклон (крен)" to it },
+            f(n("track_rate"), "°/s", 2)?.let { "Скорост на завиване" to it },
+            ac.baroRateFpm?.let { "Вертикална скорост" to "${it.toInt()} ft/min" },
+            if (n("ws") != null && n("wd") != null) "Вятър на височината" to "${n("wd")!!.toInt()}° · ${n("ws")!!.toInt()} kt (${(n("ws")!! * 1.852).toInt()} km/h)" else null,
+            f(n("oat"), "°C")?.let { "Температура навън" to it },
+            n("nic")?.let { "Цялост на позицията (NIC)" to it.toInt().toString() },
+            n("nac_p")?.let { "Точност на позицията (NACp)" to it.toInt().toString() },
+            n("sil")?.let { "Ниво на надеждност (SIL)" to it.toInt().toString() },
+            f(n("rssi"), "dBFS", 1)?.let { "Сила на сигнала" to it },
+            n("messages")?.let { "Приети съобщения" to it.toLong().toString() },
+            ac.seenSec?.let { "Последно съобщение" to "преди %.1f s".format(java.util.Locale.ROOT, it) },
+            ac.seenPosSec?.let { "Последна позиция" to "преди %.1f s".format(java.util.Locale.ROOT, it) },
         )
     }
 

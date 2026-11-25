@@ -374,6 +374,7 @@ fun TargetDetailsSheet(t: Target, me: Pair<Double, Double>?, info: DroneInfo?, o
             }
             Section("Позиция")
             KeyValue("Координати", Format.coord(t.lat, t.lon))
+            KeyValue("В градуси", "${bg.drone.rid.dms(t.lat, true)}  ${bg.drone.rid.dms(t.lon, false)}")
             KeyValue("Източник", t.source.label)
             KeyValue("Обновено", Format.ago(t.lastSeenMs))
             KeyValue("Следа", "${t.trail.size} точки")
@@ -382,6 +383,20 @@ fun TargetDetailsSheet(t: Target, me: Pair<Double, Double>?, info: DroneInfo?, o
                 KeyValue("Пилот → дрон", Format.distance(t.distanceFrom(t.operatorLat!!, t.operatorLon!!)))
             }
             t.rssi?.let { KeyValue("Сигнал", "$it dBm") }
+            if (t.trail.size >= 2) KeyValue("Изминато по следата", Format.distance(t.trailDistanceM))
+            me?.let { m ->
+                Section("Спрямо теб")
+                KeyValue("Разстояние", Format.distance(t.distanceFrom(m.first, m.second)))
+                KeyValue("Посока (азимут)", Format.heading(t.bearingFrom(m.first, m.second)))
+                t.elevationFrom(m.first, m.second)?.let { e ->
+                    KeyValue("Ъгъл над хоризонта", if (e < 0) "%.1f° (под хоризонта)".format(e) else "%.1f°".format(e))
+                }
+            }
+            Section("Мерни единици")
+            t.altitudeM?.let { a -> KeyValue("Височина", "${a.toInt()} m · ${(a / 0.3048).toInt()} ft · FL${"%03d".format((a / 0.3048 / 100).toInt().coerceAtLeast(0))}") }
+            t.speedMs?.let { v -> KeyValue("Скорост", "%.0f km/h · %.0f kt · %.1f m/s · %.0f mph".format(v * 3.6, v / 0.514444, v, v / 0.44704)) }
+            t.verticalSpeedMs?.let { v -> KeyValue("Вертикална скорост", "%+.1f m/s · %+.0f ft/min".format(v, v / 0.00508)) }
+            t.track?.let { KeyValue("Курс", Format.heading(it)) }
             if (t.details.isNotEmpty()) {
                 Section("Данни")
                 t.details.forEach { (k, v) -> KeyValue(k, v) }

@@ -48,7 +48,9 @@ class FeedsTest {
 
         val gh = targets.getValue("adsb:ae5420")
         assertEquals(TargetKind.MILITARY_UAV, gh.kind)
-        assertEquals("RQ-4 Global Hawk", gh.subtitle)
+        assertEquals("RQ-4 Global Hawk · военен · САЩ", gh.subtitle)
+        assertTrue(gh.details.any { it.first == "Държава (по ICAO блок)" && it.second == "САЩ" })
+        assertTrue(gh.details.any { it.first == "Барометрична височина" && it.second.contains("FL520") })
         assertEquals("rq-4-global-hawk", gh.encyclopediaId)
         assertEquals(52900 * 0.3048, gh.altitudeM!!, 0.01)
         assertEquals(330.4 * 0.514444, gh.speedMs!!, 0.01)
@@ -57,6 +59,31 @@ class FeedsTest {
         assertEquals("mq-9-reaper", targets.getValue("adsb:ae1f45").encyclopediaId)
         assertEquals(TargetKind.UAV, targets.getValue("adsb:4b1234").kind, "B6 без военен флаг")
         assertEquals(0.0, targets.getValue("adsb:ae0001").altitudeM)
+    }
+
+    @Test
+    fun unknownModelShowsWhyItIsAUav() {
+        // като T683 в приложението: без модел в базата, военен флаг + категория B6
+        val json = """{"ac":[{"hex":"4b8a21","flight":"T683","type":"adsb_icao","category":"B6","dbFlags":1,"alt_baro":15400,"gs":58,"track":120,
+            "lat":38.1,"lon":26.2,"tas":62,"mach":0.098,"ws":12,"wd":310,"oat":-8,"nic":8,"nac_p":10,"rssi":-21.4,"messages":5120,"seen":0.3}]}"""
+        val t = UavClassifier.uavTargets(json, now).single()
+        assertEquals("военен · ADS-B категория B6 (БЛА) · Турция", t.subtitle)
+        val d = t.details.toMap()
+        assertEquals("B6: безпилотен летателен апарат (БЛА)", d["ADS-B категория"])
+        assertTrue(d.getValue("Вид на сигнала").startsWith("ADS-B"))
+        assertEquals("310° · 12 kt (22 km/h)", d["Вятър на височината"])
+        assertEquals("-8 °C", d["Температура навън"])
+        assertEquals("0.098", d["Число на Мах"])
+        assertEquals("военен", d["Отбелязан като"])
+    }
+
+    @Test
+    fun icaoLookups() {
+        assertEquals("България", Icao.country("450123"))
+        assertEquals("Украйна", Icao.country("508abc"))
+        assertEquals(null, Icao.country("zzz"))
+        assertEquals("7700 ⚠ авария", Icao.squawk("7700"))
+        assertEquals("военен, LADD (ограничено показване)", Icao.dbFlags(9))
     }
 
     @Test

@@ -10,6 +10,7 @@ import kotlin.math.sqrt
 data class DroneState(
     val source: String, // MAC / BSSID на излъчвателя
     val uasId: String? = null,
+    val idType: Int? = null,
     val uaTypeName: String? = null,
     val operatorId: String? = null,
     val selfId: String? = null,
@@ -48,7 +49,7 @@ class DroneTracker(
         var d = drones[source] ?: DroneState(source = source, firstSeenMs = now, lastSeenMs = now)
         for (m in messages) {
             d = when (m) {
-                is RidMessage.BasicId -> d.copy(uasId = m.uasId.ifBlank { d.uasId }, uaTypeName = m.uaTypeName)
+                is RidMessage.BasicId -> d.copy(uasId = m.uasId.ifBlank { d.uasId }, idType = m.idType, uaTypeName = m.uaTypeName)
                 is RidMessage.Location -> {
                     val trail = if (m.hasPosition && d.trail.lastOrNull() != (m.lat to m.lon)) {
                         (d.trail + (m.lat to m.lon)).takeLast(trailPoints)

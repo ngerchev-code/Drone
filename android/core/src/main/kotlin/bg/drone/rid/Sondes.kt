@@ -48,6 +48,10 @@ object SondeParser {
             lastSeenMs = time.coerceAtMost(nowMs),
             typeCode = type,
             details = listOfNotNull(
+                o.str("manufacturer")?.let { "Производител" to it },
+                (o.str("subtype") ?: o.str("type"))?.let { "Модел" to it },
+                vv?.let { "Вертикална скорост" to "%+.1f m/s (%s)".format(java.util.Locale.ROOT, it, if (it > 0.5) "издига се" else if (it < -0.5) "пада" else "стои") },
+                o.num("vel_h")?.let { "Хоризонтална скорост (вятър)" to "%.1f m/s · %.0f km/h".format(java.util.Locale.ROOT, it, it * 3.6) },
                 o.num("frequency")?.let { "Честота" to "%.3f MHz".format(java.util.Locale.ROOT, it) },
                 o.num("temp")?.let { "Температура" to "%.1f °C".format(java.util.Locale.ROOT, it) },
                 o.num("humidity")?.let { "Влажност" to "${it.toInt()} %" },
@@ -56,6 +60,9 @@ object SondeParser {
                 o.int("sats")?.let { "Сателити" to it.toString() },
                 o.str("uploader_callsign")?.let { "Приета от" to it },
                 o.int("frame")?.let { "Кадър" to it.toString() },
+                o.str("time_received")?.let { "Приета в" to it.take(19).replace('T', ' ') + " UTC" },
+                o.str("software_name")?.let { "Софтуер на приемника" to it + (o.str("software_version")?.let { v -> " $v" } ?: "") },
+                o.str("uploader_antenna")?.let { "Антена на приемника" to it },
             ),
         )
     }
