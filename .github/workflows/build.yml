@@ -109,16 +109,23 @@ jobs:
           name: droneradar-receiver-debug
           path: apk
       - run: mv apk/app-debug.apk apk/DroneRadar.apk
-      - uses: softprops/action-gh-release@v2
-        with:
-          tag_name: droneradar-v0.9.${{ github.run_number }}
-          name: DroneRadar 0.9 (сглобяване ${{ github.run_number }})
-          target_commitish: ${{ github.sha }}
-          make_latest: 'true'
-          files: apk/DroneRadar.apk
-          body: |
-            Android приложение DroneRadar: жива карта на безпилотните апарати.
-            Инсталиране: свали DroneRadar.apk на телефона (Android 8.0+) и го отвори.
-            Прототип, подписан с постоянен ключ за разработка: новите версии се инсталират върху старите.
-            Ако имаш версия от преди 0.8.1, първо я деинсталирай (тя е подписана с друг ключ).
-            Проверен в емулатор (Android 13).
+      - name: GitHub Release (с повторни опити при временен отказ)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="droneradar-v0.9.${{ github.run_number }}"
+          cat > notes.md <<'NOTES'
+          Android приложение DroneRadar: жива карта на безпилотните апарати.
+          Инсталиране: свали DroneRadar.apk на телефона (Android 8.0+) и го отвори.
+          Подписано с постоянен ключ за разработка: новите версии се инсталират върху старите
+          (версии отпреди 0.8.1 трябва първо да се деинсталират). Проверено в емулатор (Android 13).
+          NOTES
+          for i in 1 2 3 4 5; do
+            if gh release create "$TAG" apk/DroneRadar.apk --target "${{ github.sha }}" --title "DroneRadar 0.9 (сглобяване ${{ github.run_number }})" --notes-file notes.md --latest; then
+              echo "Публикувано: $TAG"; exit 0
+            fi
+            gh release view "$TAG" >/dev/null 2>&1 && { gh release upload "$TAG" apk/DroneRadar.apk --clobber && exit 0; }
+            echo "Опит $i неуспешен, чакам $((i*20)) s"; sleep $((i*20))
+          done
+          exit 1
