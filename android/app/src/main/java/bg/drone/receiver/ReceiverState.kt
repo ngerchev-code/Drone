@@ -70,6 +70,11 @@ class Settings(context: Context) {
         get() = prefs.getString("streamUrls", "") ?: ""
         set(v) = prefs.edit().putString("streamUrls", v).apply()
 
+    /** Място за прогнозата „име|lat|lon“; празно = GPS позицията. */
+    var weatherPlace: String
+        get() = prefs.getString("weatherPlace", "") ?: ""
+        set(v) = prefs.edit().putString("weatherPlace", v).apply()
+
     var baseMap: String
         get() = prefs.getString("baseMap", "DARK") ?: "DARK"
         set(v) = prefs.edit().putString("baseMap", v).apply()

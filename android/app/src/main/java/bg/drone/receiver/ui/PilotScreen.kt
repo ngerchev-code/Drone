@@ -101,6 +101,7 @@ private fun WeatherView(vm: RadarViewModel, bottomPadding: Int) {
     val profile by vm.profile.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.loadWeather() }
     LazyColumn(contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = (bottomPadding + 16).dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item { WeatherPlaceRow(vm) }
         item {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 DroneProfile.entries.forEach { p -> FilterChip(selected = profile == p, onClick = { vm.setProfile(p) }, label = { Text(p.label) }) }
@@ -137,7 +138,7 @@ private fun WeatherView(vm: RadarViewModel, bottomPadding: Int) {
                         }
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            "За ${st.place?.let { Format.coord(it.first, it.second) } ?: "—"} · Open-Meteo, NOAA SWPC · ориентировъчно, решението е на пилота",
+                            "За ${st.placeName ?: st.place?.let { Format.coord(it.first, it.second) } ?: "—"} · модели Open-Meteo (ICON/ECMWF), Kp от NOAA SWPC, летища от aviationweather.gov · решението е на пилота",
                             color = Palette.Muted, fontSize = 11.sp,
                         )
                     } else {
@@ -145,6 +146,9 @@ private fun WeatherView(vm: RadarViewModel, bottomPadding: Int) {
                     }
                 }
             }
+        }
+        if (st.metars.isNotEmpty()) {
+            item { AirportWeatherList(st.metars, st.tafs, st.place) }
         }
         if (st.hours.size > 1) {
             item { Section("Следващите часове") }

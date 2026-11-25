@@ -118,8 +118,37 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
         val error: String? = null,
         val updatedMs: Long? = null,
         val place: Pair<Double, Double>? = null,
-    )
+        val placeName: String? = null,
+        val metars: List<bg.drone.rid.Metar> = emptyList(),
+        val tafs: Map<String, bg.drone.rid.Taf> = emptyMap(),
+    ) {
+        val nearestMetar: bg.drone.rid.Metar? get() = metars.firstOrNull()
+    }
     val weather = MutableStateFlow(WeatherState())
+
+    /** Избрано място за прогнозата или null = GPS / центъра на картата. */
+    val weatherPlace = MutableStateFlow(
+        settings.weatherPlace.split('|').takeIf { it.size == 3 }?.let { p ->
+            val la = p[1].toDoubleOrNull(); val lo = p[2].toDoubleOrNull()
+            if (la != null && lo != null) bg.drone.rid.Place(p[0], null, null, la, lo) else null
+        },
+    )
+    val placeResults = MutableStateFlow<List<bg.drone.rid.Place>>(emptyList())
+
+    fun searchPlaces(q: String) {
+        if (q.length < 2) { placeResults.value = emptyList(); return }
+        viewModelScope.launch {
+            placeResults.value = withContext(Dispatchers.IO) {
+                runCatching { bg.drone.rid.Geocoding.parse(Feeds.httpGet(bg.drone.rid.Geocoding.url(q), 10_000)) }.getOrDefault(emptyList())
+            }
+        }
+    }
+
+    fun setWeatherPlace(p: bg.drone.rid.Place?) {
+        weatherPlace.value = p
+        settings.weatherPlace = p?.let { "${it.name}|${it.lat}|${it.lon}" } ?: ""
+        loadWeather(force = true)
+    }
     val profile = MutableStateFlow(runCatching { DroneProfile.valueOf(settings.droneProfile) }.getOrDefault(DroneProfile.STANDARD))
 
     fun setProfile(p: DroneProfile) {
@@ -134,21 +163,30 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
         val st = weather.value
         if (st.loading) return
         if (!force && st.updatedMs != null && System.currentTimeMillis() - st.updatedMs < 20 * 60_000) return
-        val place = center()
+        val chosen = weatherPlace.value
+        val place = chosen?.let { it.lat to it.lon } ?: center()
         weather.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             val r = withContext(Dispatchers.IO) {
                 runCatching {
                     val hours = PilotWeather.parseForecast(Feeds.httpGet(PilotWeather.forecastUrl(place.first, place.second), 15_000))
                     val kp = runCatching { PilotWeather.parseKp(Feeds.httpGet(PilotWeather.KP_URL, 10_000)) }.getOrNull()
-                    hours to kp
+                    // официалното авиационно време от летищата наоколо (METAR) + прогнозите им (TAF)
+                    val metars = runCatching {
+                        bg.drone.rid.AviationWeather.parseMetars(Feeds.httpGet(bg.drone.rid.AviationWeather.metarUrl(place.first, place.second, 300.0), 15_000))
+                    }.getOrDefault(emptyList()).sortedBy { bg.drone.rid.haversine(place.first, place.second, it.lat, it.lon) }
+                    val tafs = if (metars.isEmpty()) emptyMap() else runCatching {
+                        bg.drone.rid.AviationWeather.parseTafs(Feeds.httpGet(bg.drone.rid.AviationWeather.tafUrl(metars.take(8).map { it.icao }), 15_000)).associateBy { it.icao }
+                    }.getOrDefault(emptyMap())
+                    Triple(hours, kp, metars to tafs)
                 }
             }
-            r.onSuccess { (hours, kp) ->
+            r.onSuccess { (hours, kp, met) ->
                 val now = System.currentTimeMillis() - 3_600_000
                 weather.value = WeatherState(
                     hours = hours.filter { it.timeMs >= now }.take(36).map { PilotWeather.verdict(it, profile.value, kp) },
-                    kp = kp, updatedMs = System.currentTimeMillis(), place = place,
+                    kp = kp, updatedMs = System.currentTimeMillis(), place = place, placeName = chosen?.label,
+                    metars = met.first, tafs = met.second,
                 )
             }.onFailure { e -> weather.value = st.copy(loading = false, error = "Няма връзка с прогнозата: ${e.message ?: e.javaClass.simpleName}") }
         }
@@ -237,6 +275,10 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { sondeLoop() }
         viewModelScope.launch { networkLoop() }
         viewModelScope.launch { receiverLoop() }
+        viewModelScope.launch {
+            delay(4000) // изчакваме GPS позицията
+            while (isActive) { loadWeather(); delay(20 * 60_000L) }
+        }
     }
 
     private fun center(): Pair<Double, Double> = ReceiverState.location.value ?: mapCenter

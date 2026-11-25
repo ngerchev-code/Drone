@@ -141,7 +141,7 @@ private fun RadarApp(vm: RadarViewModel, pendingSelect: androidx.compose.runtime
     val navHeight = 80 + navInset.value.toInt()
     Box(Modifier.fillMaxSize()) {
         // Картата остава винаги заредена; другите екрани се рисуват върху нея.
-        MapScreen(vm, controller, toggleScan, bottomPadding = navHeight, onSettings = { tab = Tab.SETTINGS })
+        MapScreen(vm, controller, toggleScan, bottomPadding = navHeight, onSettings = { tab = Tab.SETTINGS }, onWeather = { tab = Tab.PILOT })
         when (tab) {
             Tab.MAP -> Unit
             Tab.LIST -> ListScreen(vm, navHeight, ::open)

@@ -73,7 +73,7 @@ import bg.drone.rid.Target
 import org.maplibre.android.maps.MapView
 
 @Composable
-fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () -> Unit, bottomPadding: Int, onSettings: () -> Unit = {}) {
+fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () -> Unit, bottomPadding: Int, onSettings: () -> Unit = {}, onWeather: () -> Unit = {}) {
     val all by vm.targets.collectAsStateWithLifecycle()
     val filter by vm.filter.collectAsStateWithLifecycle()
     val selectedId by vm.selectedId.collectAsStateWithLifecycle()
@@ -136,6 +136,8 @@ fun MapScreen(vm: RadarViewModel, controller: MapController, onToggleScan: () ->
             }
             Spacer(Modifier.height(4.dp))
             FeedLine(adsb, sondes, network, receiver, scan.running, scan.demo)
+            Spacer(Modifier.height(6.dp))
+            MapWeatherChip(vm, onWeather)
         }
 
         // ---------- бутони вдясно ----------
