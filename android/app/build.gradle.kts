@@ -14,15 +14,29 @@ android {
         applicationId = "bg.drone.receiver"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.8.0"
+        versionCode = 9
+        versionName = "0.8.1"
+    }
+
+    // Постоянен ключ за разработка: всяко сглобяване в CI се подписва с него, затова новите версии
+    // се инсталират върху старите. Ключът е публичен (в repo-то) и е само за прототипа. За Google Play
+    // трябва отделен таен ключ.
+    signingConfigs {
+        create("dev") {
+            storeFile = rootProject.file("keystore/droneradar-dev.jks")
+            storePassword = "droneradar-dev"
+            keyAlias = "droneradar"
+            keyPassword = "droneradar-dev"
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("dev")
+        }
         release {
             isMinifyEnabled = false
-            // Прототип: release се подписва с debug ключа, за да може да се инсталира директно.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("dev")
         }
     }
 

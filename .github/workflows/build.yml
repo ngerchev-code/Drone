@@ -45,6 +45,8 @@ jobs:
         run: ./gradlew -p core test --tests '*Live*' --rerun-tasks --console=plain
       - name: Сглобяване на APK
         run: ./gradlew :app:assembleDebug --console=plain --stacktrace
+      - name: Подпис на APK (трябва да е един и същ във всяко сглобяване)
+        run: $(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)/apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256"
       - uses: actions/upload-artifact@v4
         with:
           name: droneradar-receiver-debug
@@ -117,4 +119,6 @@ jobs:
           body: |
             Android приложение DroneRadar: жива карта на безпилотните апарати.
             Инсталиране: свали DroneRadar.apk на телефона (Android 8.0+) и го отвори.
-            Прототип, подписан с тестов (debug) ключ. Проверен в емулатор (Android 13).
+            Прототип, подписан с постоянен ключ за разработка: новите версии се инсталират върху старите.
+            Ако имаш версия от преди 0.8.1, първо я деинсталирай (тя е подписана с друг ключ).
+            Проверен в емулатор (Android 13).
