@@ -7,5 +7,6 @@ class DroneRadarApp : Application() {
     override fun onCreate() {
         super.onCreate()
         MapLibre.getInstance(this) // трябва да е преди първия MapView
+        runCatching { AttackAlerts.sync(this) }
     }
 }

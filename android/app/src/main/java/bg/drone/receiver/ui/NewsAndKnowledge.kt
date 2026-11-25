@@ -73,7 +73,7 @@ fun NewsScreen(vm: RadarViewModel, bottomPadding: Int) {
     var cat by rememberSaveable { mutableStateOf<NewsCategory?>(null) }
     val uri = LocalUriHandler.current
     val context = androidx.compose.ui.platform.LocalContext.current
-    LaunchedEffect(Unit) { vm.loadNews() }
+    LaunchedEffect(Unit) { vm.loadNews(); vm.loadAttacks() }
     val list = st.items.filter { cat == null || it.category == cat }
 
     Column(Modifier.fillMaxSize().background(Palette.Bg)) {
@@ -91,8 +91,13 @@ fun NewsScreen(vm: RadarViewModel, bottomPadding: Int) {
         }
         Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FilterChip(selected = cat == null, onClick = { cat = null }, label = { Text("Всички") })
-            NewsCategory.entries.forEach { c -> FilterChip(selected = cat == c, onClick = { cat = c }, label = { Text("${c.label} ${st.items.count { it.category == c }}") }) }
+            val attacks by vm.attacks.collectAsStateWithLifecycle()
+            NewsCategory.entries.forEach { c ->
+                val n = if (c == NewsCategory.ALERTS) attacks.items.size else st.items.count { it.category == c }
+                FilterChip(selected = cat == c, onClick = { cat = c }, label = { Text(if (c == NewsCategory.ALERTS && attacks.items.isEmpty()) c.label else "${c.label} $n") })
+            }
         }
+        if (cat == NewsCategory.ALERTS) { AlertsView(vm, bottomPadding); return@Column }
         LazyColumn(contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = (bottomPadding + 12).dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(list, key = { it.link }) { n ->
                 Surface(shape = RoundedCornerShape(14.dp), color = Palette.Surface, modifier = Modifier.fillMaxWidth().clickable { uri.openUri(n.link) }) {
@@ -134,6 +139,7 @@ fun NewsScreen(vm: RadarViewModel, bottomPadding: Int) {
 }
 
 private fun newsColor(c: NewsCategory) = when (c) {
+    NewsCategory.ALERTS -> Palette.Bad
     NewsCategory.BULGARIA -> Palette.Ok
     NewsCategory.EVENTS -> Color(0xFFE879F9)
     NewsCategory.CIVIL -> Palette.Accent

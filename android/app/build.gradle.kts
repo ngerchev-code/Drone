@@ -14,8 +14,8 @@ android {
         applicationId = "bg.drone.receiver"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "0.10.1"
+        versionCode = 14
+        versionName = "0.11.0"
     }
 
     // Постоянен ключ за разработка: всяко сглобяване в CI се подписва с него, затова новите версии
@@ -69,6 +69,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-rtsp:1.4.1")
     implementation("androidx.media3:media3-datasource-rtmp:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")

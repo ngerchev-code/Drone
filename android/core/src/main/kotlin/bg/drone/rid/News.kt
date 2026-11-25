@@ -12,6 +12,7 @@ import java.util.Locale
 import javax.xml.parsers.DocumentBuilderFactory
 
 enum class NewsCategory(val label: String) {
+    ALERTS("⚠ Атаки и тревоги"),
     BULGARIA("България"),
     EVENTS("Събития"),
     CIVIL("Граждански"),

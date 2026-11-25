@@ -448,6 +448,27 @@ class RadarViewModel(app: Application) : AndroidViewModel(app) {
         } + if (receiverFailures >= 3) " Следващ опит след 1 мин." else ""
     }
 
+    // ---------- Сигнали за атаки (сводка) ----------
+    data class AlertsState(val loading: Boolean = false, val items: List<bg.drone.rid.AlertItem> = emptyList(), val errors: Map<String, String> = emptyMap(), val updatedMs: Long? = null)
+    val attacks = MutableStateFlow(AlertsState())
+
+    fun loadAttacks(force: Boolean = false) {
+        val st = attacks.value
+        if (st.loading) return
+        if (!force && st.updatedMs != null && System.currentTimeMillis() - st.updatedMs < 10 * 60_000) return
+        attacks.update { it.copy(loading = true) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                val jobs = bg.drone.rid.Alerts.SOURCES.map { src -> async { News.fetchAll(listOf(src)) } }
+                jobs.map { it.await() }
+            }
+            val all = r.flatMap { it.items }.sortedByDescending { it.publishedMs ?: 0 }
+            val items = bg.drone.rid.Alerts.fromNews(all)
+            attacks.value = AlertsState(false, items, r.flatMap { it.errors.entries }.associate { it.key to it.value }, System.currentTimeMillis())
+            runCatching { AttackAlerts.process(getApplication<Application>(), items) }
+        }
+    }
+
     // ---------- Новини (по заявка; кеш 15 мин) ----------
     fun loadNews(force: Boolean = false) {
         val st = news.value

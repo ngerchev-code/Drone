@@ -114,7 +114,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          TAG="droneradar-v0.10.${{ github.run_number }}"
+          TAG="droneradar-v0.11.${{ github.run_number }}"
           cat > notes.md <<'NOTES'
           Android приложение DroneRadar: жива карта на безпилотните апарати.
           Инсталиране: свали DroneRadar.apk на телефона (Android 8.0+) и го отвори.
@@ -122,7 +122,7 @@ jobs:
           (версии отпреди 0.8.1 трябва първо да се деинсталират). Проверено в емулатор (Android 13).
           NOTES
           for i in 1 2 3 4 5; do
-            if gh release create "$TAG" apk/DroneRadar.apk --target "${{ github.sha }}" --title "DroneRadar 0.10 (сглобяване ${{ github.run_number }})" --notes-file notes.md --latest; then
+            if gh release create "$TAG" apk/DroneRadar.apk --target "${{ github.sha }}" --title "DroneRadar 0.11 (сглобяване ${{ github.run_number }})" --notes-file notes.md --latest; then
               echo "Публикувано: $TAG"; exit 0
             fi
             gh release view "$TAG" >/dev/null 2>&1 && { gh release upload "$TAG" apk/DroneRadar.apk --clobber && exit 0; }

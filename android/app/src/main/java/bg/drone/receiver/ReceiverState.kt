@@ -75,6 +75,21 @@ class Settings(context: Context) {
         get() = prefs.getString("weatherPlace", "") ?: ""
         set(v) = prefs.edit().putString("weatherPlace", v).apply()
 
+    /** Известия за нови сигнали за атаки (фонова проверка на всеки 30 мин). */
+    var attackAlerts: Boolean
+        get() = bool("attackAlerts", true)
+        set(v) = put("attackAlerts", v)
+
+    var attackRegions: Set<bg.drone.rid.AlertRegion>
+        get() = prefs.getString("attackRegions", null)?.split(',')?.mapNotNull { runCatching { bg.drone.rid.AlertRegion.valueOf(it) }.getOrNull() }?.toSet()
+            ?: AttackAlerts.DEFAULT_REGIONS
+        set(v) = prefs.edit().putString("attackRegions", v.joinToString(",") { it.name }).apply()
+
+    /** Вече видени сигнали (ключове), за да не се повтарят известията. */
+    var seenAlerts: String
+        get() = prefs.getString("seenAlerts", "") ?: ""
+        set(v) = prefs.edit().putString("seenAlerts", v).apply()
+
     var baseMap: String
         get() = prefs.getString("baseMap", "DARK") ?: "DARK"
         set(v) = prefs.edit().putString("baseMap", v).apply()

@@ -274,6 +274,22 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int, controller: bg.drone.
             if (upload) KeyValue("Изпратени към мрежата", "${scan.uploadedTotal} (чакат ${scan.pendingUpload})")
             scan.message?.let { Text(it, color = Palette.Warn, fontSize = 12.sp) }
         }
+        Group("Сигнали за атаки с дронове и ракети") {
+            var atk by remember { mutableStateOf(s.attackAlerts) }
+            var regions by remember { mutableStateOf(s.attackRegions) }
+            Toggle("Известия за нови сигнали", "Проверка на всеки 30 мин, и при затворено приложение. Сводката е в Новини → ⚠ Атаки и тревоги", atk) {
+                atk = it; s.attackAlerts = it; bg.drone.receiver.AttackAlerts.sync(ctx)
+            }
+            Text("Региони за известия:", color = Palette.Text, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                bg.drone.rid.AlertRegion.entries.forEach { r ->
+                    FilterChip(selected = r in regions, onClick = {
+                        regions = if (r in regions) regions - r else regions + r
+                        s.attackRegions = regions
+                    }, label = { Text(r.label) })
+                }
+            }
+        }
         Group("Аларми") {
             Toggle("Известие при безпилотен апарат наблизо", "Дронове с Remote ID около теб винаги, плюс избраните по-долу", alerts) {
                 alerts = it; s.alertsEnabled = it
@@ -341,7 +357,7 @@ fun SettingsScreen(vm: RadarViewModel, bottomPadding: Int, controller: bg.drone.
             KeyValue("SondeHub", "CC BY-SA")
             KeyValue("Карта", "OpenFreeMap · © OpenMapTiles · © OpenStreetMap")
             KeyValue("Новини", bg.drone.rid.News.SOURCES.joinToString(", ") { it.name })
-            KeyValue("Версия", "0.10.1")
+            KeyValue("Версия", "0.11.0")
         }
     }
 }
